@@ -41,7 +41,6 @@ class Fees(AccountsController):
 
         self.calculate_total()
         self.set_missing_accounts_and_fields()
-        self.validate_enrollment()
 
     def set_missing_accounts_and_fields(self):
         if not self.company:
@@ -63,17 +62,13 @@ class Fees(AccountsController):
             self.cost_center = accounts_details.cost_center
         if not self.student_email:
             self.student_email = self.get_student_emails()
-
-    def validate_enrollment(self):
-        enrollment_student = frappe.db.get_value(
-			"Program Enrollment", self.program_enrollment, "student"
-		)
-        if enrollment_student != self.student:
-            frappe.throw(
-				_("Invalid Enrollment {0} for student {1}").format(
-					frappe.bold(self.program_enrollment), frappe.bold(self.student)
-				)
-			)
+        # if not self.record_income_in_temp_account or not self.temporary_income_account:
+        #    education_setting = frappe.get_doc("Education Settings")
+#
+        # if not self.record_income_in_temp_account:
+        #    self.record_income_in_temp_account = education_setting.record_income_in_temp_account
+        # if not self.temporary_income_account:
+        #    self.temporary_income_account = education_setting.temporary_income_account
 
     def get_student_emails(self):
         student_emails = frappe.db.sql_list(

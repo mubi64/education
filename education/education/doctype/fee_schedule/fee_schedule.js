@@ -33,22 +33,12 @@ frappe.ui.form.on('Fee Schedule', {
 			};
 		});
 
-		frm.set_query('academic_term', function(doc) {
+		frm.set_query('student_group', 'student_groups', function () {
 			return {
-				filters: {
-					'academic_year': doc.academic_year
-				}
-			};
-		});
-
-		frm.set_query('student_group', 'student_groups', function() {
-			return {
-				filters: {
-					'program': frm.doc.program,
-					'academic_term': frm.doc.academic_term,
-					'academic_year': frm.doc.academic_year,
-					'disabled': 0
-				}
+				'program': frm.doc.program,
+				'academic_term': frm.doc.academic_term,
+				'academic_year': frm.doc.academic_year,
+				'disabled': 0
 			};
 		});
 

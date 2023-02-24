@@ -1,5 +1,4 @@
 {
- "actions": [],
  "allow_import": 1,
  "autoname": "format:QUESTION-{#####}",
  "creation": "2018-10-01 15:58:00.696815",
@@ -35,12 +34,10 @@
    "read_only": 1
   }
  ],
- "links": [],
- "modified": "2023-02-06 12:24:36.703135",
+ "modified": "2020-09-24 18:39:21.880974",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Question",
- "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -66,10 +63,18 @@
    "role": "Instructor",
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "LMS User",
+   "share": 1
   }
  ],
  "quick_entry": 1,
  "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
+ "sort_order": "DESC"
 }

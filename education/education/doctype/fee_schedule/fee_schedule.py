@@ -153,13 +153,13 @@ def generate_fee(fee_schedule):
                     doc.total_amount += transportation_student.fee_amount
                     insert = False
                     for i, comp in enumerate(fees_doc.components):
-                        if comp.fees_category != "Transportation Fee":
+                        if comp.fees_category != transportation_student.fee_category:
                             insert = True
                         else:
                             insert = False
                     if insert:
                         row = fees_doc.append('components', {})
-                        row.fees_category = "Transportation Fee"
+                        row.fees_category = transportation_student.fee_category
                         row.amount = transportation_student.fee_amount
                 taxes_amount = 0
                 rate = 0
@@ -222,9 +222,9 @@ def get_students(
         conditions += " and pe.academic_term={}".format(
             frappe.db.escape(academic_term))
 
-	students = frappe.db.sql(
-		"""
-		select pe.student, pe.student_name, pe.program, pe.student_batch_name, pe.name as enrollment
+    students = frappe.db.sql(
+        """
+		select pe.student, pe.student_name, pe.program, pe.student_batch_name
 		from `tabStudent Group Student` sgs, `tabProgram Enrollment` pe
 		where
 			pe.docstatus = 1 and pe.student = sgs.student and pe.academic_year = %s

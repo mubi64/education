@@ -1,3 +1,5 @@
+cur_frm.add_fetch('student', 'title', 'student_name');
+
 frappe.ui.form.on('Student Group', {
 	onload: function(frm) {
 		frm.set_query('academic_term', function() {

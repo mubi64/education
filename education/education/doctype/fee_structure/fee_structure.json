@@ -47,7 +47,6 @@
    "oldfieldname": "earning_name",
    "oldfieldtype": "Data",
    "options": "Program",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -76,8 +75,7 @@
    "fieldname": "academic_year",
    "fieldtype": "Link",
    "label": "Academic Year",
-   "options": "Academic Year",
-   "reqd": 1
+   "options": "Academic Year"
   },
   {
    "fieldname": "section_break_4",
@@ -111,7 +109,6 @@
    "label": "Accounts"
   },
   {
-   "fetch_from": "company.default_receivable_account",
    "fieldname": "receivable_account",
    "fieldtype": "Link",
    "label": "Receivable Account",
@@ -119,7 +116,6 @@
    "reqd": 1
   },
   {
-   "fetch_from": "company.default_income_account",
    "fieldname": "income_account",
    "fieldtype": "Link",
    "label": "Income Account",
@@ -130,7 +126,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "company.cost_center",
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "label": "Cost Center",
@@ -164,11 +159,10 @@
  "icon": "fa fa-flag",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-02-09 16:09:50.125383",
+ "modified": "2020-06-16 15:34:57.295010",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Structure",
- "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -213,9 +207,9 @@
    "write": 1
   }
  ],
+ "restrict_to_domain": "",
  "search_fields": "program, student_category, academic_year",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
  "title_field": "program"
 }

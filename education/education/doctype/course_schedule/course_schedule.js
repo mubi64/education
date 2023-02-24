@@ -1,3 +1,6 @@
+frappe.provide("education");
+
+cur_frm.add_fetch("student_group", "course", "course")
 frappe.ui.form.on("Course Schedule", {
 	refresh: function(frm) {
 		if (!frm.doc.__islocal) {

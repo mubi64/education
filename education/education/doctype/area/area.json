@@ -9,20 +9,22 @@
  "engine": "InnoDB",
  "field_order": [
   "area_name",
-  "gps_coordinates",
-  "column_break_2",
   "address",
+  "column_break_2",
+  "gps_coordinates",
   "description"
  ],
  "fields": [
   {
    "fieldname": "area_name",
    "fieldtype": "Data",
-   "label": "Area Name"
+   "in_list_view": 1,
+   "label": "Area Name",
+   "reqd": 1
   },
   {
    "fieldname": "address",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Address"
   },
   {
@@ -42,7 +44,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-02-22 14:16:33.926992",
+ "modified": "2023-02-24 15:55:00.720374",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Area",

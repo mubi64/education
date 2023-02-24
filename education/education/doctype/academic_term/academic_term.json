@@ -10,11 +10,9 @@
  "field_order": [
   "academic_year",
   "term_name",
-  "column_break_jhzu",
   "term_start_date",
   "term_end_date",
-  "title",
-  "connections_tab"
+  "title"
  ],
  "fields": [
   {
@@ -53,20 +51,10 @@
    "hidden": 1,
    "label": "Title",
    "unique": 1
-  },
-  {
-   "fieldname": "column_break_jhzu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "connections_tab",
-   "fieldtype": "Tab Break",
-   "label": "Connections",
-   "show_dashboard": 1
   }
  ],
  "links": [],
- "modified": "2023-02-14 13:13:40.419268",
+ "modified": "2022-12-13 18:20:17.263912",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Academic Term",
@@ -87,6 +75,7 @@
   }
  ],
  "quick_entry": 1,
+ "restrict_to_domain": "",
  "sort_field": "name",
  "sort_order": "DESC",
  "states": [],
