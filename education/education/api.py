@@ -217,6 +217,30 @@ def get_fee_components(fee_structure):
 		)
 		return fs
 
+@frappe.whitelist()
+def get_fee_sales_charges(taxes_and_charges):
+
+	if taxes_and_charges:
+		stc = frappe.get_all(
+			"Sales Taxes and Charges",
+			fields=["charge_type", "account_head", "rate", "total", "base_total", "cost_center", "description", "tax_amount", "base_tax_amount", "tax_amount_after_discount_amount"],
+			filters={"parent": taxes_and_charges},
+			order_by="idx",
+		)
+		return stc
+
+@frappe.whitelist()
+def get_student_transportation(student):
+    fee_student = frappe.get_doc('Student', student)
+    if fee_student.transportation_fee_structure:
+        return frappe.get_doc(
+            'Transportation Fee Structure', fee_student.transportation_fee_structure)
+        # trans_dict = dict({
+        #     "fees_category": "Transportation Fee",
+        #     "amount": "Rs 1000.0",
+        # })
+        # self.components.append(trans_dict)
+
 
 @frappe.whitelist()
 def get_fee_schedule(program, student_category=None):

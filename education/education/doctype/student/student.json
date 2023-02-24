@@ -49,6 +49,8 @@
   "column_break_31",
   "reason_for_leaving",
   "student_name",
+  "transportations_tab",
+  "transportation_fee_structure",
   "connections_tab"
  ],
  "fields": [
@@ -278,11 +280,22 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "transportations_tab",
+   "fieldtype": "Tab Break",
+   "label": "Transportations"
+  },
+  {
+   "fieldname": "transportation_fee_structure",
+   "fieldtype": "Link",
+   "label": "Transportation Fee Structure",
+   "options": "Transportation Fee Structure"
   }
  ],
  "image_field": "image",
  "links": [],
- "modified": "2023-01-17 10:50:13.901143",
+ "modified": "2023-02-22 13:36:24.967448",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Student",
