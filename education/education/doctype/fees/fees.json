@@ -10,27 +10,24 @@
   "naming_series",
   "student",
   "student_name",
-  "fee_schedule",
   "include_payment",
   "send_payment_request",
   "column_break_4",
   "company",
   "posting_date",
   "posting_time",
-  "set_posting_time",
   "due_date",
+  "set_posting_time",
   "student_details",
   "program_enrollment",
   "program",
-  "student_batch",
-  "student_email",
   "column_break_16",
-  "student_category",
-  "academic_term",
   "academic_year",
+  "academic_term",
   "section_break_7",
-  "currency",
   "fee_structure",
+  "fee_schedule",
+  "currency",
   "components",
   "section_break_10",
   "taxes_and_charges",
@@ -44,10 +41,12 @@
   "amended_from",
   "grand_total_in_words",
   "outstanding_amount",
-  "edit_printing_settings",
-  "letter_head",
-  "column_break_32",
-  "select_print_heading",
+  "student_details_tab",
+  "student_email",
+  "student_category",
+  "column_break_ywbf",
+  "student_batch",
+  "accounts_tab",
   "account",
   "receivable_account",
   "column_break_39",
@@ -58,7 +57,12 @@
   "other_charges_calculation",
   "accounting_dimensions_section",
   "cost_center",
-  "dimension_col_break"
+  "dimension_col_break",
+  "print_settings_tab",
+  "edit_printing_settings",
+  "letter_head",
+  "column_break_32",
+  "select_print_heading"
  ],
  "fields": [
   {
@@ -153,27 +157,28 @@
    "reqd": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "student_details",
-   "fieldtype": "Section Break",
-   "label": "Student Details"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "program_enrollment",
    "fieldtype": "Link",
    "label": "Program Enrollment",
-   "options": "Program Enrollment"
+   "options": "Program Enrollment",
+   "reqd": 1
   },
   {
+   "fetch_from": "program_enrollment.program",
    "fieldname": "program",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Program",
    "options": "Program",
-   "reqd": 1
+   "read_only": 1
   },
   {
+   "fetch_from": ".",
    "fieldname": "student_batch",
    "fieldtype": "Link",
    "label": "Student Batch",
@@ -182,6 +187,7 @@
   },
   {
    "allow_on_submit": 1,
+   "fetch_from": "student.student_email_id",
    "fieldname": "student_email",
    "fieldtype": "Data",
    "label": "Student Email",
@@ -193,6 +199,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": ".",
    "fieldname": "student_category",
    "fieldtype": "Link",
    "label": "Student Category",
@@ -228,7 +235,8 @@
    "fieldtype": "Link",
    "label": "Fee Structure",
    "options": "Fee Structure",
-   "print_hide": 1
+   "print_hide": 1,
+   "reqd": 1
   },
   {
    "fieldname": "components",
@@ -277,7 +285,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "edit_printing_settings",
    "fieldtype": "Section Break",
    "label": "Printing Settings",
@@ -312,6 +319,7 @@
    "print_hide": 1
   },
   {
+   "fetch_from": "fee_structure.receivable_account",
    "fieldname": "receivable_account",
    "fieldtype": "Link",
    "label": "Receivable Account",
@@ -320,6 +328,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "fee_structure.income_account",
    "fieldname": "income_account",
    "fieldtype": "Link",
    "label": "Income Account",
@@ -332,6 +341,7 @@
    "print_hide": 1
   },
   {
+   "fetch_from": "fee_structure.cost_center",
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "label": "Cost Center",
@@ -409,6 +419,25 @@
    "fieldtype": "Float",
    "label": "Grand Total before Tax",
    "precision": "2"
+  },
+  {
+   "fieldname": "student_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Student Details"
+  },
+  {
+   "fieldname": "column_break_ywbf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "accounts_tab",
+   "fieldtype": "Tab Break",
+   "label": "Accounts"
+  },
+  {
+   "fieldname": "print_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Print Settings"
   }
  ],
  "is_submittable": 1,

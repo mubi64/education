@@ -222,9 +222,9 @@ def get_students(
         conditions += " and pe.academic_term={}".format(
             frappe.db.escape(academic_term))
 
-    students = frappe.db.sql(
-        """
-		select pe.student, pe.student_name, pe.program, pe.student_batch_name
+	students = frappe.db.sql(
+		"""
+		select pe.student, pe.student_name, pe.program, pe.student_batch_name, pe.name as enrollment
 		from `tabStudent Group Student` sgs, `tabProgram Enrollment` pe
 		where
 			pe.docstatus = 1 and pe.student = sgs.student and pe.academic_year = %s
