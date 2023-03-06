@@ -2,8 +2,7 @@
 // For license information, please see license.txt
 
 frappe.provide("erpnext.accounts.dimensions");
-
-
+var checked_id = [];
 
 frappe.ui.form.on("Fees", {
 	setup: function (frm) {
@@ -56,6 +55,22 @@ frappe.ui.form.on("Fees", {
 		erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
 	},
 
+	// validate: function (frm) {
+	// 	if (frm.doc.outstanding_amount == 0) {
+	// 		var isRecorded = true
+	// 		for (let i = 0; i < frm.doc.components.length; i++) {
+	// 			if (frm.doc.components[i].income_recorded === 0) {
+	// 				isRecorded = false
+	// 				break
+	// 			}
+	// 		}
+	// 		if (!isRecorded) {
+	// 			frm.page.set_indicator(__("Paid, Income not Recorded"), "orange")
+	// 			// frm.set_value("doc_status", "Paid, Income not Recorded");
+	// 		}
+	// 	}
+	// },
+
 	befor_save: async function (frm) {
 		if (frm.doc.taxes_and_charges) {
 			await frm.trigger("taxes_and_charges");
@@ -63,6 +78,23 @@ frappe.ui.form.on("Fees", {
 	},
 
 	refresh: function (frm) {
+		// if (frm.doc.docstatus == 1) {
+		// 	if (frm.doc.outstanding_amount > 0) {
+		// 		frm.page.set_indicator(__("Unpaid"), "orange")
+		// 	} else {
+		// 		var isRecorded = true
+		// 		for (let i = 0; i < frm.doc.components.length; i++) {
+		// 			if (frm.doc.components[i].income_recorded === 0) {
+		// 				isRecorded = false
+		// 				break
+		// 			}
+		// 		}
+		// 		if (!isRecorded) {
+		// 			frm.page.set_indicator(__("Paid, Income not Recorded"), "orange")
+		// 			// frm.doc.doc_status = "Paid, Income not Recorded"
+		// 		}
+		// 	}
+		// }
 		if (frm.doc.docstatus == 0 && frm.doc.set_posting_time) {
 			frm.set_df_property('posting_date', 'read_only', 0);
 			frm.set_df_property('posting_time', 'read_only', 0);
@@ -92,21 +124,79 @@ frappe.ui.form.on("Fees", {
 			}, __('Create'));
 			frm.page.set_inner_btn_group_as_primary(__('Create'));
 		}
-		if (frm.doc.docstatus === 1 && frm.doc.outstanding_amount != 0) {
-			frm.add_custom_button(__("Payment"), function () {
-				frm.events.make_payment_entry(frm);
-			}, __('Create'));
-			frm.page.set_inner_btn_group_as_primary(__('Create'));
-		}
 		var comp = frm.doc.components.filter(e => {
 			if (e.income_recorded !== 1)
 				return e
 		})
+		if (frm.doc.docstatus === 1 && frm.doc.outstanding_amount != 0) {
+			frm.add_custom_button(__("Payment"), function () {
+				let d = new frappe.ui.Dialog({
+					title: __("Payment"),
+					fields: [
+						{
+							label: 'Components',
+							fieldname: 'components',
+							fieldtype: 'Table',
+							cannot_add_rows: true,
+							cannot_delete_rows: true,
+							read_only: 1,
+							in_place_edit: true,
+							data: frm.doc.components.filter(e => {
+								checked_id.map(id => {
+									if (e.idx === id) {
+										e.__checked = 1
+									}
+								})
+								return e
+							}),
+							fields: [
+								{ fieldname: 'fees_category', fieldtype: 'Link', in_list_view: 1, label: 'Fees Category' },
+								{ fieldname: 'amount', fieldtype: 'Currency', in_list_view: 1, label: 'Amount' },
+								{ fieldname: 'amount_after_tax', fieldtype: 'Currency', in_list_view: 1, label: 'Amount After Tax' }
+							]
+						}
+					],
+					primary_action_label: 'Payment',
+					primary_action(fees) {
+						let selectedFee = fees.components.filter(comp => {
+							if (comp.__checked === 1) {
+								checked_id.push(comp.idx)
+								return comp
+							}
+						})
+						var amount = 0;
+						for (let i = 0; i < selectedFee.length; i++) {
+							amount += selectedFee[i].amount_after_tax
+						}
+						if (selectedFee.length > 0) {
+							if (amount <= frm.doc.outstanding_amount) {
+								frm.events.make_payment_entry(frm, amount);
+								d.hide();
+							} else {
+								frappe.show_alert({
+									message: __('Amount should not be greater than outstanding amount'),
+									indicator: 'red'
+								}, 5);
+							}
+						} else {
+							frappe.show_alert({
+								message: __('Pleace select the components'),
+								indicator: 'red'
+							}, 5);
+						}
+					}
+				});
+
+				d.show();
+				// frm.events.make_payment_entry(frm);
+			}, __('Create'));
+			frm.page.set_inner_btn_group_as_primary(__('Create'));
+		}
 		if (frm.doc.docstatus === 1 && frm.doc.record_income_in_temp_account && comp.length > 0) {
 			frm.add_custom_button(__("Record Income"), function () {
 				// frappe.msgprint(frm.doc.receivable_account);
 				let d = new frappe.ui.Dialog({
-					title: __("Recorded Items"),
+					title: __("Record Income"),
 					fields: [
 						{
 							label: 'Components',
@@ -122,42 +212,54 @@ frappe.ui.form.on("Fees", {
 							}),
 							fields: [
 								{ fieldname: 'fees_category', fieldtype: 'Link', in_list_view: 1, label: 'Fees Category' },
-								{ fieldname: 'amount', fieldtype: 'Currency', in_list_view: 1, label: 'Amount' }
+								{ fieldname: 'amount', fieldtype: 'Currency', in_list_view: 1, label: 'Amount' },
+								{ fieldname: 'amount_after_tax', fieldtype: 'Currency', in_list_view: 1, label: 'Amount After Tax' }
 							]
 						}
 					],
 					primary_action_label: 'Update',
 					primary_action(fees) {
 						let selectedFee = fees.components.filter(comp => {
-							if (comp.__checked === 1) return comp
-						})
-						frappe.call({
-							method: "education.education.doctype.fees.fees.record_income",
-							args: {
-								"fees": selectedFee,
-								"current_docname": frm.doc.name
-							},
-							callback: function (r) {
-								frm.reload_doc();
+							if (comp.__checked === 1) {
+								checked_id.push(comp.idx)
+								console.log(checked_id, "comp");
+								return comp
 							}
-						});
-						d.hide();
-						frappe.show_alert({
-							message: __('Document Updated'),
-							indicator: 'green'
-						}, 5);
+						})
+						if (selectedFee.length > 0) {
+							frappe.call({
+								method: "education.education.doctype.fees.fees.record_income",
+								args: {
+									"fees": selectedFee,
+									"current_docname": frm.doc.name
+								},
+								callback: function (r) {
+									frm.reload_doc();
+								}
+							});
+							d.hide();
+							frappe.show_alert({
+								message: __('Document updated'),
+								indicator: 'green'
+							}, 5);
+						} else {
+							frappe.show_alert({
+								message: __('Pleace select the components'),
+								indicator: 'red'
+							}, 5);
+						}
 					}
 				});
 
 				d.show();
 			}, __('Create'));
 			frm.page.set_inner_btn_group_as_primary(__('Create'));
-			// frm.trigger("taxes_and_charges");
 		}
 	},
 
 	student: function (frm) {
 		if (frm.doc.student) {
+			checked_id = [];
 			frappe.call({
 				method: "education.education.api.get_current_enrollment",
 				args: {
@@ -198,7 +300,7 @@ frappe.ui.form.on("Fees", {
 		}
 	},
 
-	make_payment_entry: function (frm) {
+	make_payment_entry: function (frm, amount) {
 		return frappe.call({
 			method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_payment_entry",
 			args: {
@@ -208,6 +310,9 @@ frappe.ui.form.on("Fees", {
 				"payment_type": "Receive",
 			},
 			callback: function (r) {
+				r.message.paid_amount = amount
+				r.message.references[0].allocated_amount = amount
+				r.message.total_allocated_amount = amount
 				var doc = frappe.model.sync(r.message);
 				frappe.set_route("Form", doc[0].doctype, doc[0].name);
 			}

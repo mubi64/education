@@ -21,12 +21,17 @@ class Fees(AccountsController):
             self.indicator_color = "orange"
             self.indicator_title = _("Unpaid")
         else:
+            # isRecorded = True
             # for i, fee in enumerate(self.components):
-            #     if not fee.income_recorded
-            # "paid,not recorded"
+            #     if fee.income_recorded == 0:
+            #         isRecorded = False
+            #         break
+            # if isRecorded:
             self.indicator_color = "green"
-            self.indicator_title = _(
-                "Paid,not recorded" if fee.income_recorded == 0 else "Paid" for i, fee in enumerate(self.components))
+            self.indicator_title = _("Paid")
+            # else:
+            #     self.indicator_color = "orange"
+            #     self.indicator_title = _("Paid, Income not Recorded")
 
     def validate(self):
         tax_and_char = 0
@@ -348,7 +353,7 @@ def record_income(fees, current_docname):
         for i, comp in enumerate(current_doc.components):
             if comp.fees_category == fee["fees_category"]:
                 frappe.db.set_value('Fee Component', comp.name,
-                                    'income_recorded', 1, update_modified=False)
+                                    'income_recorded', 1, update_modified=True)
 
     from erpnext.accounts.general_ledger import make_gl_entries
 
