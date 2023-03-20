@@ -38,6 +38,11 @@ class StudentApplicant(AccountsController):
         # total_tax_amounts = 0
         self.validate_dates()
         self.validate_term()
+        education_setting = frappe.get_doc("Education Settings")
+        if education_setting.account_paid_to and not self.account_paid_to:
+            self.account_paid_to = education_setting.account_paid_to
+        elif education_setting.income_account and not self.income_account:
+            self.income_account = education_setting.income_account
         # student_admission = get_student_admission(self.student_admission)
         # for i, program in enumerate(student_admission.program_details):
         #     total_fee += program.application_fee
@@ -151,11 +156,13 @@ def get_student_admission_data(student_admission, program):
     else:
         return None
 
+
 @frappe.whitelist()
 def get_student_admission(name):
     doc = frappe.get_doc('Student Admission', name)
 
     return doc
+
 
 @frappe.whitelist()
 def make_payment(doc, current_docname):
@@ -167,7 +174,7 @@ def make_payment(doc, current_docname):
     amount = 0
     for i, tax in enumerate(current_doc.taxes):
         amount = tax.tax_amount
-        
+
         gl_entries.append(current_doc.get_gl_dict(
             {
                 "account": tax.account_head,
@@ -178,7 +185,7 @@ def make_payment(doc, current_docname):
             item=current_doc,
         ))
     # fee_doc = frappe.get_doc('Fee Category', fee["fees_category"])
-    
+
     fee_gl_entry = current_doc.get_gl_dict(
         {
             "account": current_doc.income_account,
