@@ -15,6 +15,7 @@ class FeeStructure(Document):
 		"""Calculates total amount."""
 		self.total_amount = 0
 		for d in self.components:
+			d.gross_amount = d.amount
 			self.total_amount += d.amount
 
 

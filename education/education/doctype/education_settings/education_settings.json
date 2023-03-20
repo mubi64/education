@@ -14,7 +14,11 @@
   "academic_term_reqd",
   "user_creation_skip",
   "section_break_7",
-  "instructor_created_by"
+  "instructor_created_by",
+  "accounting_section",
+  "account_paid_to",
+  "column_break_13",
+  "income_account"
  ],
  "fields": [
   {
@@ -76,11 +80,33 @@
    "fieldname": "user_creation_skip",
    "fieldtype": "Check",
    "label": "Skip User creation for new Student"
+  },
+  {
+   "fieldname": "accounting_section",
+   "fieldtype": "Section Break",
+   "label": "Admission Settings"
+  },
+  {
+   "fieldname": "account_paid_to",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account Paid to",
+   "options": "Account"
+  },
+  {
+   "fieldname": "income_account",
+   "fieldtype": "Link",
+   "label": "Income Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_13",
+   "fieldtype": "Column Break"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-02-17 16:06:58.119610",
+ "modified": "2023-03-16 10:50:18.064933",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Education Settings",

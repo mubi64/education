@@ -40,12 +40,47 @@ class Fees(AccountsController):
             for i, tax in enumerate(self.taxes):
                 rate = tax.rate / 100
                 tax_and_char = comp.amount * rate
-                print(tax_and_char, "print")
                 comp.taxes_and_charges += tax_and_char
                 comp.amount_after_tax = comp.taxes_and_charges + comp.amount
-
+        self.append_transportation()
+        self.append_discount()
         self.calculate_total()
         self.set_missing_accounts_and_fields()
+
+    def append_discount(self):
+        discount_doc = get_student_dicount(self.student)
+        if discount_doc != None:
+            discounts = discount_doc.discount
+            for e, component in enumerate(self.components):
+                for i, discount in enumerate(discounts):
+                    if component.fees_category == discount.fee_category:
+                        component.discount_type = discount.discount_type
+                        if discount.discount_type == "Percentage":
+                            component.percentage = discount.percentage
+                            percent = component.percentage / 100
+                            discount_amount = percent * component.gross_amount
+                            component.amount = component.gross_amount - discount_amount
+                        elif discount.discount_type == "Amount":
+                            component.discount_amount = discount.amount
+                            component.amount = component.gross_amount - component.discount_amount
+
+    def append_transportation(self):
+        fee_student = frappe.get_doc('Student', self.student)
+        if fee_student.transportation_fee_structure:
+            transportation_student = frappe.get_doc(
+                'Transportation Fee Structure', fee_student.transportation_fee_structure)
+            # self.total_amount += transportation_student.fee_amount
+            insert = False
+            for i, comp in enumerate(self.components):
+                if comp.fees_category != transportation_student.fee_category:
+                    insert = True
+                else:
+                    insert = False
+            if insert:
+                row = self.append('components', {})
+                row.fees_category = transportation_student.fee_category
+                row.amount = transportation_student.fee_amount
+                row.gross_amount = transportation_student.fee_amount
 
     def set_missing_accounts_and_fields(self):
         if not self.company:
@@ -105,6 +140,7 @@ class Fees(AccountsController):
         for i, tax in enumerate(self.taxes):
             taxes_amount += tax.tax_amount
         self.total_taxes_and_charges = taxes_amount
+        self.total_taxes_and_charges_company_currency = taxes_amount
         self.grand_total_before_tax = self.grand_total
         self.grand_total += taxes_amount
         self.outstanding_amount = self.grand_total
@@ -137,10 +173,10 @@ class Fees(AccountsController):
     def make_gl_entries(self):
         if not self.grand_total:
             return
-
+        recorded_gl_entries = []
         if not self.record_income_in_temp_account:
             for i, tax in enumerate(self.taxes):
-                taxes_gl_entries = self.get_gl_dict(
+                recorded_gl_entries.append(self.get_gl_dict(
                     {
                         "account": tax.account_head,
                         "against": self.student,
@@ -149,8 +185,8 @@ class Fees(AccountsController):
                         "cost_center": self.cost_center,
                     },
                     item=self,
-                )
-                taxes_debit_gl_entries = self.get_gl_dict(
+                ))
+                recorded_gl_entries.append(self.get_gl_dict(
                     {
                         "account": self.receivable_account,
                         "party_type": "Student",
@@ -162,8 +198,8 @@ class Fees(AccountsController):
                         "against_voucher_type": self.doctype,
                     },
                     item=self,
-                )
-            student_gl_entries = self.get_gl_dict(
+                ))
+            recorded_gl_entries.append(self.get_gl_dict(
                 {
                     "account": self.receivable_account,
                     "party_type": "Student",
@@ -175,9 +211,9 @@ class Fees(AccountsController):
                     "against_voucher_type": self.doctype,
                 },
                 item=self,
-            )
+            ))
 
-            fee_gl_entry = self.get_gl_dict(
+            recorded_gl_entries.append(self.get_gl_dict(
                 {
                     "account": self.income_account,
                     "against": self.student,
@@ -186,7 +222,7 @@ class Fees(AccountsController):
                     "cost_center": self.cost_center,
                 },
                 item=self,
-            )
+            ))
         else:
             if not self.components:
                 return
@@ -245,10 +281,8 @@ class Fees(AccountsController):
             gl_entries.append(fee_gl_entry)
 
         from erpnext.accounts.general_ledger import make_gl_entries
-
         make_gl_entries(
-            [taxes_gl_entries, student_gl_entries,
-                fee_gl_entry, taxes_debit_gl_entries] if not self.record_income_in_temp_account else gl_entries,
+            recorded_gl_entries if not self.record_income_in_temp_account else gl_entries,
             cancel=(self.docstatus == 2),
             update_outstanding="Yes",
             merge_entries=False,
@@ -362,3 +396,11 @@ def record_income(fees, current_docname):
         cancel=(current_doc.docstatus == 2),
         update_outstanding="No",
     )
+
+
+@frappe.whitelist()
+def get_student_dicount(student):
+    fee_student = frappe.get_doc('Student', student)
+    if fee_student.fee_discount_type:
+        return frappe.get_doc(
+            'Fee Discount Type', fee_student.fee_discount_type)

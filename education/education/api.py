@@ -211,7 +211,7 @@ def get_fee_components(fee_structure):
 	if fee_structure:
 		fs = frappe.get_all(
 			"Fee Component",
-			fields=["fees_category", "description", "amount"],
+			fields=["fees_category", "description", "amount", "gross_amount"],
 			filters={"parent": fee_structure},
 			order_by="idx",
 		)
@@ -223,7 +223,7 @@ def get_fee_sales_charges(taxes_and_charges):
 	if taxes_and_charges:
 		stc = frappe.get_all(
 			"Sales Taxes and Charges",
-			fields=["charge_type", "account_head", "rate", "total", "base_total", "cost_center", "description", "tax_amount", "base_tax_amount", "tax_amount_after_discount_amount"],
+			fields=["*"],
 			filters={"parent": taxes_and_charges},
 			order_by="idx",
 		)
@@ -512,3 +512,16 @@ def get_instructors(student_group):
 	return frappe.get_all(
 		"Student Group Instructor", {"parent": student_group}, pluck="instructor"
 	)
+
+@frappe.whitelist()
+def get_student_admission(name):
+    doc = frappe.get_doc('Student Admission', name)
+
+    return doc
+
+@frappe.whitelist()
+def get_student_dicount(student):
+	fee_student = frappe.get_doc('Student', student)
+	if fee_student.fee_discount_type:
+		return frappe.get_doc(
+            'Fee Discount Type', fee_student.fee_discount_type)

@@ -109,6 +109,10 @@ class ProgramEnrollment(Document):
 						"student_name": self.student_name,
 						"program_enrollment": self.name,
 						"components": fee_components,
+						"taxes_and_charges": self.taxes_and_charges,
+						"taxes": self.taxes,
+						"record_income_in_temp_account": self.record_income_in_temp_account,
+						"temporary_income_account": self.temporary_income_account
 					}
 				)
 

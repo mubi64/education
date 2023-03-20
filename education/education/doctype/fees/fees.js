@@ -207,9 +207,6 @@ frappe.ui.form.on("Fees", {
             primary_action(fees) {
               let selectedFee = fees.components.filter((comp) => {
                 if (comp.__checked === 1) {
-                  //   var name = frm.doc.name;
-                  //   checked_id[name] = [];
-                  //   checked_id[name].push(comp.idx);
                   return comp;
                 }
               });
@@ -245,7 +242,6 @@ frappe.ui.form.on("Fees", {
           });
 
           d.show();
-          // frm.events.make_payment_entry(frm);
         },
         __("Create")
       );
@@ -259,7 +255,6 @@ frappe.ui.form.on("Fees", {
       frm.add_custom_button(
         __("Record Income"),
         function () {
-          // frappe.msgprint(frm.doc.receivable_account);
           let d = new frappe.ui.Dialog({
             title: __("Record Income"),
             fields: [
@@ -421,6 +416,10 @@ frappe.ui.form.on("Fees", {
   },
 
   fee_structure: function (frm) {
+    if (!frm.doc.student) {
+      frappe.msgprint(__("Please select the student"));
+      return;
+    }
     frm.set_value("components", "");
     if (frm.doc.fee_structure) {
       frappe.call({
@@ -438,6 +437,7 @@ frappe.ui.form.on("Fees", {
               );
               row.fees_category = d.fees_category;
               row.description = d.description;
+              row.gross_amount = d.amount;
               row.amount = d.amount;
             });
           }
@@ -456,10 +456,44 @@ frappe.ui.form.on("Fees", {
               "components"
             );
             row.fees_category = r.message.fee_category;
+            row.gross_amount = r.message.fee_amount;
             row.amount = r.message.fee_amount;
           }
           refresh_field("components");
           frm.trigger("calculate_total_amount");
+        },
+      });
+      frappe.call({
+        method: "education.education.api.get_student_dicount",
+        args: {
+          student: frm.doc.student,
+        },
+        callback: function (r) {
+          if (r.message) {
+            var discounts = r.message.discount;
+            var components = frm.doc.components;
+            for (let e = 0; e < components.length; e++) {
+              const component = components[e];
+              for (let i = 0; i < discounts.length; i++) {
+                const discount = discounts[i];
+                if (component.fees_category == discount.fee_category) {
+                  component.discount_type = discount.discount_type;
+                  if (discount.discount_type == "Percentage") {
+                    component.percentage = discount.percentage;
+                    var percent = component.percentage / 100;
+                    var discount_amount = percent * component.gross_amount;
+                    component.amount = component.gross_amount - discount_amount;
+                  } else if (discount.discount_type == "Amount") {
+                    component.discount_amount = discount.amount;
+                    component.amount =
+                      component.gross_amount - component.discount_amount;
+                  }
+                }
+              }
+            }
+            frm.fields_dict.components.grid.refresh();
+            frm.trigger("taxes_and_charges");
+          }
         },
       });
     }
@@ -498,6 +532,7 @@ frappe.ui.form.on("Fees", {
               row.charge_type = d.charge_type;
               row.account_head = d.account_head;
               row.rate = d.rate;
+              row.included_in_print_rate = d.included_in_print_rate;
               row.total = amount + frm.doc.grand_total_before_tax;
               row.base_total = d.base_total;
               row.cost_center = d.cost_center;
@@ -522,5 +557,54 @@ frappe.ui.form.on("Fees", {
 frappe.ui.form.on("Fee Component", {
   amount: function (frm) {
     frm.trigger("calculate_total_amount");
+  },
+  discount_type: function (frm) {
+    var components = frm.doc.components;
+    for (let i = 0; i < components.length; i++) {
+      const component = components[i];
+      if (component.discount_type == "Amount") {
+        if (component.discount_amount) {
+          component.amount = component.gross_amount - component.discount_amount;
+          component.discount_type = "Amount";
+        }
+      } else if (component.discount_type == "Percentage") {
+        if (component.percentage) {
+          var percent = component.percentage / 100;
+          var discount_amount = percent * component.gross_amount;
+          component.amount = component.gross_amount - discount_amount;
+          component.discount_type = "Percentage";
+        }
+      } else {
+        component.amount = component.gross_amount;
+      }
+    }
+    frm.trigger("calculate_total_amount");
+    frm.fields_dict.components.grid.refresh();
+  },
+  percentage: function (frm) {
+    var components = frm.doc.components;
+    for (let i = 0; i < components.length; i++) {
+      const component = components[i];
+      if (component.percentage) {
+        var percent = component.percentage / 100;
+        var discount_amount = percent * component.gross_amount;
+        component.amount = component.gross_amount - discount_amount;
+        component.discount_type = "Percentage";
+      }
+    }
+    frm.trigger("calculate_total_amount");
+    frm.fields_dict.components.grid.refresh();
+  },
+  discount_amount: function (frm) {
+    var components = frm.doc.components;
+    for (let i = 0; i < components.length; i++) {
+      const component = components[i];
+      if (component.discount_amount) {
+        component.amount = component.gross_amount - component.discount_amount;
+        component.discount_type = "Amount";
+      }
+    }
+    frm.trigger("calculate_total_amount");
+    frm.fields_dict.components.grid.refresh();
   },
 });

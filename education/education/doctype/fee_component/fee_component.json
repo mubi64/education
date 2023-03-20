@@ -10,10 +10,16 @@
   "fees_category",
   "description",
   "column_break_2",
+  "gross_amount",
   "amount",
   "income_recorded",
   "taxes_and_charges",
-  "amount_after_tax"
+  "amount_after_tax",
+  "discount_section",
+  "discount_type",
+  "column_break_10",
+  "percentage",
+  "discount_amount"
  ],
  "fields": [
   {
@@ -68,12 +74,53 @@
    "label": "Amount after Tax",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Amount\"",
+   "fieldname": "discount_amount",
+   "fieldtype": "Float",
+   "label": "Discount Amount",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Amount\"",
+   "precision": "2",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "discount_type",
+   "fieldtype": "Select",
+   "label": "Discount Type",
+   "options": "\nPercentage\nAmount",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Percentage\"",
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "label": "Percentage",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Percentage\"",
+   "precision": "2",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "discount_section",
+   "fieldtype": "Section Break",
+   "label": "Discount"
+  },
+  {
+   "fieldname": "gross_amount",
+   "fieldtype": "Currency",
+   "label": "Gross Amount",
+   "precision": "2",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-flag",
  "istable": 1,
  "links": [],
- "modified": "2023-02-22 17:54:47.119827",
+ "modified": "2023-03-17 11:59:51.689782",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Component",
