@@ -34,6 +34,8 @@ class Fees(AccountsController):
             #     self.indicator_title = _("Paid, Income not Recorded")
 
     def validate(self):
+        for i, comp in enumerate(self.components):
+            comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
         self.append_transportation()
         self.append_discount()
         tax_and_char = 0
@@ -67,6 +69,9 @@ class Fees(AccountsController):
                         if discount.discount_type == "Percentage":
                             component.percentage = discount.percentage
                             percent = component.percentage / 100
+                            print(percent, "percent")
+                            print(component.gross_amount,
+                                  "omponent.gross_amount")
                             discount_amount = percent * component.gross_amount
                             component.amount = component.gross_amount - discount_amount
                         elif discount.discount_type == "Amount":
@@ -111,13 +116,6 @@ class Fees(AccountsController):
             self.cost_center = accounts_details.cost_center
         if not self.student_email:
             self.student_email = self.get_student_emails()
-        # if not self.record_income_in_temp_account or not self.temporary_income_account:
-        #    education_setting = frappe.get_doc("Education Settings")
-#
-        # if not self.record_income_in_temp_account:
-        #    self.record_income_in_temp_account = education_setting.record_income_in_temp_account
-        # if not self.temporary_income_account:
-        #    self.temporary_income_account = education_setting.temporary_income_account
 
     def get_student_emails(self):
         student_emails = frappe.db.sql_list(

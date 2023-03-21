@@ -33,15 +33,12 @@ class StudentApplicant(AccountsController):
         set_name_by_naming_series(self)
 
     def validate(self):
-        # total_fee = 0
-        # total_fee_amount = 0
-        # total_tax_amounts = 0
         self.validate_dates()
         self.validate_term()
         education_setting = frappe.get_doc("Education Settings")
         if education_setting.account_paid_to and not self.account_paid_to:
             self.account_paid_to = education_setting.account_paid_to
-        elif education_setting.income_account and not self.income_account:
+        if education_setting.income_account and not self.income_account:
             self.income_account = education_setting.income_account
 
         self.validate_student_tax()
@@ -86,16 +83,12 @@ class StudentApplicant(AccountsController):
                     rate_persent = tax.rate / 100
                     total_amount = 0
                     amount = 0
-                    uncheck_grand_total =0
-
 
                     if len(student_admission.program_details) > 0:
                         for e, program in enumerate(student_admission.program_details):
                             if (self.program == sadmission.program):
                                 total_amount = program.application_fee
                                 amount = rate_persent * program.application_fee
-
-                        grand_total = total
 
                         if tax.included_in_print_rate == 1:
                             rate_plus_1 = rate_persent + 1
@@ -104,26 +97,17 @@ class StudentApplicant(AccountsController):
                             tax.tax_amount = total_amount - totals
                             tax.total = totals
                             tax_and_charges += total_amount - totals
-                            grand_total += tax_and_charges
-                            print(grand_total, tax_and_charges, grand_total -
-                                  tax_and_charges, "check grand total")
-                            self.grand_total = grand_total - tax_and_charges
                         else:
                             tax.tax_amount = amount
                             tax.total = total_amount + amount
                             totals = total_amount + amount
                             tax_and_charges += amount
-                            print(total_amount, amount, total_amount +
-                                  amount, "uncheck grand total")
-                            uncheck_grand_total+= total_amount + amount
-                            self.grand_total = uncheck_grand_total
-                            print(total, tax_and_charges, total -
-                                  tax_and_charges, "uncheck grand total before tax")
+                            self.grand_total += tax.tax_amount
+
                         self.grand_total_before_tax = self.grand_total - tax_and_charges
                         total_tax += tax.tax_amount
                         self.total_taxes_and_charges = total_tax
-                        self.total_taxes_and_charges_company_currency = total_tax 
-
+                        self.total_taxes_and_charges_company_currency = total_tax
 
     def validate_dates(self):
         if self.date_of_birth and getdate(self.date_of_birth) >= getdate():
