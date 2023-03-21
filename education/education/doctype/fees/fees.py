@@ -34,6 +34,9 @@ class Fees(AccountsController):
             #     self.indicator_title = _("Paid, Income not Recorded")
 
     def validate(self):
+        for i, comp in enumerate(self.components):
+            comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
+
         self.append_transportation()
         self.append_discount()
         tax_and_char = 0
