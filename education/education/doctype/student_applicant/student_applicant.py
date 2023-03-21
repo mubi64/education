@@ -43,35 +43,87 @@ class StudentApplicant(AccountsController):
             self.account_paid_to = education_setting.account_paid_to
         elif education_setting.income_account and not self.income_account:
             self.income_account = education_setting.income_account
-        # student_admission = get_student_admission(self.student_admission)
-        # for i, program in enumerate(student_admission.program_details):
-        #     total_fee += program.application_fee
-        #     for i, tax in enumerate(self.taxes):
-        #         if tax.included_in_print_rate == 1:
-        #             rate = (tax.rate / 100) + 1
-        #             total_fee_amount = total_fee / rate
-        #             tax_amount = total_fee - total_fee_amount
-        #             total_tax_amounts += tax_amount
-        #             tax.tax_amount = tax_amount
-        #             tax.total = total_fee_amount
-        #             total_fee = total_fee_amount
-        #         else:
-        #             rate = tax.rate / 100
-        #             tax_amount = rate * total_fee
-        #             total_tax_amounts += tax_amount
-        #             tax.tax_amount = tax_amount
-        #             tax.total = total_fee
 
-        # self.total_taxes_and_charges = total_tax_amounts
-        # self.total_taxes_and_charges_company_currency = total_tax_amounts
-        # self.grand_total_before_tax = total_fee
-        # self.grand_total = total_fee + total_tax_amounts
+        self.validate_student_tax()
+
         self.title = " ".join(
             filter(None, [self.first_name, self.middle_name, self.last_name])
         )
 
         if self.student_admission and self.program and self.date_of_birth:
             self.validation_from_student_admission()
+
+    def validate_student_tax(self):
+        student_admission = get_student_admission(self.student_admission)
+        tax_and_charges = 0
+        if student_admission:
+            total = 0
+            if len(student_admission.program_details) > 0:
+                for i, sadmission in enumerate(student_admission.program_details):
+                    if (self.program == sadmission.program):
+                        total = sadmission.application_fee
+                        if not self.taxes_and_charges and sadmission.taxes_and_charges:
+                            self.taxes_and_charges = sadmission.taxes_and_charges
+            if self.taxes_and_charges and len(self.taxes) == 0:
+                from education.education.api import get_fee_sales_charges
+                taxes_and_charges_table = get_fee_sales_charges(
+                    self.taxes_and_charges)
+                for i, tax in enumerate(taxes_and_charges_table):
+                    row = self.append('taxes', {})
+                    row.charge_type = tax.charge_type
+                    row.account_head = tax.account_head
+                    row.description = tax.description
+                    row.cost_center = tax.cost_center
+                    row.rate = tax.rate
+                    row.included_in_print_rate = tax.included_in_print_rate
+
+            self.total = total
+            self.grand_total_before_tax = total
+            self.grand_total = total
+            total_tax = 0
+            if self.taxes:
+                for i, tax in enumerate(self.taxes):
+                    rate_persent = tax.rate / 100
+                    total_amount = 0
+                    amount = 0
+                    uncheck_grand_total =0
+
+
+                    if len(student_admission.program_details) > 0:
+                        for e, program in enumerate(student_admission.program_details):
+                            if (self.program == sadmission.program):
+                                total_amount = program.application_fee
+                                amount = rate_persent * program.application_fee
+
+                        grand_total = total
+
+                        if tax.included_in_print_rate == 1:
+                            rate_plus_1 = rate_persent + 1
+                            total_amount = total_amount + amount
+                            totals = total_amount / rate_plus_1
+                            tax.tax_amount = total_amount - totals
+                            tax.total = totals
+                            tax_and_charges += total_amount - totals
+                            grand_total += tax_and_charges
+                            print(grand_total, tax_and_charges, grand_total -
+                                  tax_and_charges, "check grand total")
+                            self.grand_total = grand_total - tax_and_charges
+                        else:
+                            tax.tax_amount = amount
+                            tax.total = total_amount + amount
+                            totals = total_amount + amount
+                            tax_and_charges += amount
+                            print(total_amount, amount, total_amount +
+                                  amount, "uncheck grand total")
+                            uncheck_grand_total+= total_amount + amount
+                            self.grand_total = uncheck_grand_total
+                            print(total, tax_and_charges, total -
+                                  tax_and_charges, "uncheck grand total before tax")
+                        self.grand_total_before_tax = self.grand_total - tax_and_charges
+                        total_tax += tax.tax_amount
+                        self.total_taxes_and_charges = total_tax
+                        self.total_taxes_and_charges_company_currency = total_tax 
+
 
     def validate_dates(self):
         if self.date_of_birth and getdate(self.date_of_birth) >= getdate():
@@ -170,6 +222,7 @@ def make_payment(doc, current_docname):
     if not doc:
         return
     current_doc = frappe.get_doc('Student Applicant', current_docname)
+    current_company = frappe.get_doc('Company', current_doc.company)
     gl_entries = []
     amount = 0
     for i, tax in enumerate(current_doc.taxes):
@@ -191,6 +244,7 @@ def make_payment(doc, current_docname):
             "account": current_doc.income_account,
             "credit": current_doc.grand_total_before_tax,
             "credit_in_account_currency": current_doc.grand_total_before_tax,
+            "cost_center": current_company.cost_center,
             "against_voucher": current_doc.name,
             "against_voucher_type": current_doc.doctype,
         },
@@ -201,6 +255,7 @@ def make_payment(doc, current_docname):
             "account": current_doc.account_paid_to,
             "debit": current_doc.grand_total,
             "debit_in_account_currency": current_doc.grand_total,
+            "cost_center": current_company.cost_center,
             "against_voucher": current_doc.name,
             "against_voucher_type": current_doc.doctype,
         },

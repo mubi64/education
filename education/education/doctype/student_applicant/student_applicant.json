@@ -317,8 +317,7 @@
    "fieldname": "account_paid_to",
    "fieldtype": "Link",
    "label": "Account Paid to",
-   "options": "Account",
-   "reqd": 1
+   "options": "Account"
   },
   {
    "fieldname": "income_account",
@@ -422,7 +421,7 @@
  ],
  "image_field": "image",
  "links": [],
- "modified": "2023-03-16 17:53:01.714627",
+ "modified": "2023-03-20 18:04:43.283871",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Student Applicant",

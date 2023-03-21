@@ -34,6 +34,8 @@ class Fees(AccountsController):
             #     self.indicator_title = _("Paid, Income not Recorded")
 
     def validate(self):
+        self.append_transportation()
+        self.append_discount()
         tax_and_char = 0
         for i, comp in enumerate(self.components):
             comp.taxes_and_charges = 0.0
@@ -42,8 +44,15 @@ class Fees(AccountsController):
                 tax_and_char = comp.amount * rate
                 comp.taxes_and_charges += tax_and_char
                 comp.amount_after_tax = comp.taxes_and_charges + comp.amount
-        self.append_transportation()
-        self.append_discount()
+
+        for i, tax in enumerate(self.taxes):
+            tax.tax_amount = 0
+            tax.total = 0
+            rate = tax.rate / 100
+            for i, comp in enumerate(self.components):
+                tax.tax_amount += comp.amount * rate
+                tax.total += comp.taxes_and_charges + comp.amount
+
         self.calculate_total()
         self.set_missing_accounts_and_fields()
 

@@ -68,12 +68,12 @@ frappe.ui.form.on("Student Applicant", {
                 current_docname: frm.doc.name,
               },
               callback: function (r) {
+                frm.set_value("paid", 1);
+                frm.save_or_update();
                 console.log(r.message, "Response Make Payment");
                 // frm.reload_doc();
               },
             });
-            // frm.set_value("paid", 1);
-            // frm.save_or_update();
           },
           __("Actions")
         );
@@ -143,10 +143,16 @@ frappe.ui.form.on("Student Applicant", {
           var res = r.message;
           if (res) {
             var total = 0;
-            if (res.program_details.length > 0) {
-              for (let e = 0; e < res.program_details.length; e++) {
-                total += res.program_details[e].application_fee;
+            if (frm.doc.program) {
+              if (res.program_details.length > 0) {
+                for (let e = 0; e < res.program_details.length; e++) {
+                  if (frm.doc.program == res.program_details[e].program) {
+                    total = res.program_details[e].application_fee;
+                  }
+                }
               }
+            } else {
+              frappe.msgprint(__("Please select program"));
             }
             frm.set_value("total", total);
             frm.set_value("taxes_and_charges", "");
@@ -160,8 +166,8 @@ frappe.ui.form.on("Student Applicant", {
       frm.set_value("taxes", "");
       frm.set_value("total_taxes_and_charges", "");
       frm.set_value("total_taxes_and_charges_company_currency", "");
-      frm.set_value("grand_total_before_tax", frm.doc.total);
-      frm.set_value("grand_total", frm.doc.total);
+      // frm.set_value("grand_total_before_tax", frm.doc.total);
+      // frm.set_value("grand_total", frm.doc.total);
       frappe.call({
         method: "education.education.api.get_fee_sales_charges",
         args: {
@@ -201,9 +207,12 @@ frappe.ui.form.on("Student Applicant", {
 
                     if (res.program_details.length > 0) {
                       for (let e = 0; e < res.program_details.length; e++) {
-                        total_amount += res.program_details[e].application_fee;
-                        amount +=
-                          rate_persent * res.program_details[e].application_fee;
+                        if (frm.doc.program == res.program_details[e].program) {
+                          total_amount = res.program_details[e].application_fee;
+                          amount =
+                            rate_persent *
+                            res.program_details[e].application_fee;
+                        }
                       }
                     }
                     if (taxes[i].included_in_print_rate == 1) {
@@ -213,14 +222,14 @@ frappe.ui.form.on("Student Applicant", {
                       taxes[i].tax_amount = total_amount - total;
                       taxes[i].total = total;
                       tax_and_charges += total_amount - total;
-                      frm.set_value(
-                        "grand_total",
-                        frm.doc.grand_total - (total_amount - total)
-                      );
-                      frm.set_value(
-                        "grand_total_before_tax",
-                        frm.doc.grand_total_before_tax - (total_amount - total)
-                      );
+                      // frm.set_value(
+                      //   "grand_total",
+                      //   frm.doc.grand_total - (total_amount - total)
+                      // );
+                      // frm.set_value(
+                      //   "grand_total_before_tax",
+                      //   frm.doc.grand_total_before_tax - (total_amount - total)
+                      // );
                     } else {
                       taxes[i].tax_amount = amount;
                       taxes[i].total = total_amount + amount;
@@ -233,10 +242,10 @@ frappe.ui.form.on("Student Applicant", {
                     tax_and_charges
                   );
                   // frm.set_value("grand_total_before_tax", total - tax_and_charges);
-                  frm.set_value(
-                    "grand_total",
-                    frm.doc.grand_total + tax_and_charges
-                  );
+                  // frm.set_value(
+                  //   "grand_total",
+                  //   frm.doc.grand_total + tax_and_charges
+                  // );
                   // frm.set_value(
                   //   "grand_total",
                   //   grand_total_before_tax + tax_and_charges
@@ -268,11 +277,11 @@ frappe.ui.form.on("Sales Taxes and Charges", {
         amount = total_amount - total;
         tax.tax_amount = amount;
         tax.total = total;
-        frm.set_value("grand_total", frm.doc.grand_total - amount);
-        frm.set_value(
-          "grand_total_before_tax",
-          frm.doc.grand_total_before_tax - amount
-        );
+        // frm.set_value("grand_total", frm.doc.grand_total - amount);
+        // frm.set_value(
+        //   "grand_total_before_tax",
+        //   frm.doc.grand_total_before_tax - amount
+        // );
       } else {
         frappe.call({
           method: "education.education.api.get_student_admission",
@@ -284,17 +293,19 @@ frappe.ui.form.on("Sales Taxes and Charges", {
             if (res) {
               if (res.program_details) {
                 for (let e = 0; e < res.program_details.length; e++) {
-                  total_amount += res.program_details[e].application_fee;
-                  amount += rate * res.program_details[e].application_fee; // comp_amount;
+                  if (frm.doc.program == res.program_details[e].program) {
+                    total_amount = res.program_details[e].application_fee;
+                    amount = rate * res.program_details[e].application_fee; // comp_amount;
+                  }
                 }
               }
               tax.tax_amount = amount;
               tax.total = total_amount + amount;
-              frm.set_value("grand_total", frm.doc.grand_total + amount);
-              frm.set_value(
-                "grand_total_before_tax",
-                frm.doc.grand_total_before_tax + amount
-              );
+              // frm.set_value("grand_total", frm.doc.grand_total + amount);
+              // frm.set_value(
+              //   "grand_total_before_tax",
+              //   frm.doc.grand_total_before_tax + amount
+              // );
             }
           },
         });

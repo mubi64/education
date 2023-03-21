@@ -499,20 +499,11 @@ frappe.ui.form.on("Fees", {
     }
   },
 
-  calculate_total_amount: function (frm) {
-    var grand_total_before_tax = 0;
-    for (var i = 0; i < frm.doc.components.length; i++) {
-      grand_total_before_tax += frm.doc.components[i].amount;
-    }
-    frm.set_value("grand_total_before_tax", grand_total_before_tax);
-    frm.trigger("taxes_and_charges");
-  },
-
   taxes_and_charges: function (frm) {
-    frm.set_value("taxes", "");
-    frm.set_value("total_taxes_and_charges", 0);
-    frm.set_value("total_taxes_and_charges_company_currency", 0);
     if (frm.doc.taxes_and_charges) {
+      frm.set_value("taxes", "");
+      frm.set_value("total_taxes_and_charges", 0);
+      frm.set_value("total_taxes_and_charges_company_currency", 0);
       frappe.call({
         method: "education.education.api.get_fee_sales_charges",
         args: {
@@ -551,6 +542,15 @@ frappe.ui.form.on("Fees", {
         },
       });
     }
+  },
+
+  calculate_total_amount: function (frm) {
+    var grand_total_before_tax = 0;
+    for (var i = 0; i < frm.doc.components.length; i++) {
+      grand_total_before_tax += frm.doc.components[i].amount;
+    }
+    frm.set_value("grand_total_before_tax", grand_total_before_tax);
+    frm.trigger("taxes_and_charges");
   },
 });
 
