@@ -59,7 +59,6 @@ frappe.ui.form.on("Student Applicant", {
         frm.add_custom_button(
           __("Make Payment"),
           function () {
-            console.log("Make Payment");
             frappe.call({
               method:
                 "education.education.doctype.student_applicant.student_applicant.make_payment",
@@ -70,7 +69,6 @@ frappe.ui.form.on("Student Applicant", {
               callback: function (r) {
                 frm.set_value("paid", 1);
                 frm.save_or_update();
-                console.log(r.message, "Response Make Payment");
                 // frm.reload_doc();
               },
             });
@@ -114,11 +112,9 @@ frappe.ui.form.on("Student Applicant", {
       "user_creation_skip",
       (r) => {
         if (r.account_paid_to && !frm.doc.account_paid_to) {
-          console.log("skjdfhsdlfj 3");
           frm.set_value("account_paid_to", r.account_paid_to);
         }
         if (r.income_account && !frm.doc.income_account) {
-          console.log(frm.doc.income_account, "skjdfhsdlfj");
           frm.set_value("income_account", r.income_account);
         }
         if (cint(r.user_creation_skip) !== 1) {

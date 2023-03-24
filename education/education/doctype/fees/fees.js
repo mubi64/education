@@ -212,7 +212,11 @@ frappe.ui.form.on("Fees", {
               });
               var amount = 0;
               for (let i = 0; i < selectedFee.length; i++) {
-                amount += selectedFee[i].amount_after_tax;
+                if (selectedFee[i].amount_after_tax) {
+                  amount += selectedFee[i].amount_after_tax;
+                } else {
+                  amount += selectedFee[i].amount;
+                }
               }
               if (selectedFee.length > 0) {
                 if (amount <= frm.doc.outstanding_amount) {

@@ -38,25 +38,8 @@ class Fees(AccountsController):
             comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
         self.append_transportation()
         self.append_discount()
-        tax_and_char = 0
-        for i, comp in enumerate(self.components):
-            comp.taxes_and_charges = 0.0
-            for i, tax in enumerate(self.taxes):
-                rate = tax.rate / 100
-                tax_and_char = comp.amount * rate
-                comp.taxes_and_charges += tax_and_char
-                comp.amount_after_tax = comp.taxes_and_charges + comp.amount
-
-        for i, tax in enumerate(self.taxes):
-            tax.tax_amount = 0
-            tax.total = 0
-            rate = tax.rate / 100
-            for i, comp in enumerate(self.components):
-                tax.tax_amount += comp.amount * rate
-                tax.total += comp.taxes_and_charges + comp.amount
-
-        self.calculate_total()
         self.set_missing_accounts_and_fields()
+        self.calculate_total()
 
     def append_discount(self):
         discount_doc = get_student_dicount(self.student)
@@ -117,6 +100,39 @@ class Fees(AccountsController):
         if not self.student_email:
             self.student_email = self.get_student_emails()
 
+    def calculate_total(self):
+        """Calculates total amount."""
+        tax_and_char = 0
+        for i, comp in enumerate(self.components):
+            comp.taxes_and_charges = 0.0
+            for i, tax in enumerate(self.taxes):
+                rate = tax.rate / 100
+                tax_and_char = comp.amount * rate
+                comp.taxes_and_charges += tax_and_char
+                comp.amount_after_tax = comp.taxes_and_charges + comp.amount
+
+        for i, tax in enumerate(self.taxes):
+            if not tax.tax_amount or not tax.total:
+                tax.tax_amount = 0
+                tax.total = 0
+                rate = tax.rate / 100
+                for i, comp in enumerate(self.components):
+                    tax.tax_amount += comp.amount * rate
+                    tax.total += comp.taxes_and_charges + comp.amount
+
+        self.grand_total = 0
+        for d in self.components:
+            self.grand_total += d.amount
+        taxes_amount = 0
+        for i, tax in enumerate(self.taxes):
+            taxes_amount += tax.tax_amount
+        self.total_taxes_and_charges = taxes_amount
+        self.total_taxes_and_charges_company_currency = taxes_amount
+        self.grand_total_before_tax = self.grand_total
+        self.grand_total += taxes_amount
+        self.grand_total_in_words = money_in_words(self.grand_total)
+        self.outstanding_amount = self.grand_total
+
     def get_student_emails(self):
         student_emails = frappe.db.sql_list(
             """
@@ -136,22 +152,6 @@ class Fees(AccountsController):
             return ", ".join(list(set(student_emails)))
         else:
             return None
-
-    def calculate_total(self):
-        """Calculates total amount."""
-        self.grand_total = 0
-        for d in self.components:
-            self.grand_total += d.amount
-        # self.outstanding_amount = self.grand_total
-        taxes_amount = 0
-        for i, tax in enumerate(self.taxes):
-            taxes_amount += tax.tax_amount
-        self.total_taxes_and_charges = taxes_amount
-        self.total_taxes_and_charges_company_currency = taxes_amount
-        self.grand_total_before_tax = self.grand_total
-        self.grand_total += taxes_amount
-        self.outstanding_amount = self.grand_total
-        self.grand_total_in_words = money_in_words(self.grand_total)
 
     def on_submit(self):
         self.make_gl_entries()
@@ -182,38 +182,39 @@ class Fees(AccountsController):
             return
         recorded_gl_entries = []
         if not self.record_income_in_temp_account:
-            for i, tax in enumerate(self.taxes):
-                recorded_gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": tax.account_head,
-                        "against": self.student,
-                        "credit": tax.tax_amount,
-                        "credit_in_account_currency": tax.tax_amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                ))
-                recorded_gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": self.receivable_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "against": tax.account_head,
-                        "debit": tax.tax_amount,
-                        "debit_in_account_currency": tax.tax_amount,
-                        "against_voucher": self.name,
-                        "against_voucher_type": self.doctype,
-                    },
-                    item=self,
-                ))
+            if self.taxes:
+                for i, tax in enumerate(self.taxes):
+                    recorded_gl_entries.append(self.get_gl_dict(
+                        {
+                            "account": tax.account_head,
+                            "against": self.student,
+                            "credit": tax.tax_amount,
+                            "credit_in_account_currency": tax.tax_amount,
+                            "cost_center": self.cost_center,
+                        },
+                        item=self,
+                    ))
+                    recorded_gl_entries.append(self.get_gl_dict(
+                        {
+                            "account": self.receivable_account,
+                            "party_type": "Student",
+                            "party": self.student,
+                            "against": tax.account_head,
+                            "debit": tax.tax_amount,
+                            "debit_in_account_currency": tax.tax_amount,
+                            "against_voucher": self.name,
+                            "against_voucher_type": self.doctype,
+                        },
+                        item=self,
+                    ))
             recorded_gl_entries.append(self.get_gl_dict(
                 {
                     "account": self.receivable_account,
                     "party_type": "Student",
                     "party": self.student,
                     "against": self.income_account,
-                    "debit": self.grand_total,
-                    "debit_in_account_currency": self.grand_total,
+                    "debit": self.grand_total_before_tax,
+                    "debit_in_account_currency": self.grand_total_before_tax,
                     "against_voucher": self.name,
                     "against_voucher_type": self.doctype,
                 },
@@ -224,8 +225,8 @@ class Fees(AccountsController):
                 {
                     "account": self.income_account,
                     "against": self.student,
-                    "credit": self.grand_total,
-                    "credit_in_account_currency": self.grand_total,
+                    "credit": self.grand_total_before_tax,
+                    "credit_in_account_currency": self.grand_total_before_tax,
                     "cost_center": self.cost_center,
                 },
                 item=self,
@@ -235,30 +236,33 @@ class Fees(AccountsController):
                 return
             gl_entries = []
             tax_gl_amount = 0
-            for i, tax in enumerate(self.taxes):
-                tax_gl_amount += tax.tax_amount
-            gl_entries.append(self.get_gl_dict(
-                {
-                    "account": self.temporary_income_account,
-                    "against": self.student,
-                    "credit": tax_gl_amount,
-                    "credit_in_account_currency": tax_gl_amount,
-                    "cost_center": tax.cost_center,
-                },
-                item=self,
-            ))
-            gl_entries.append(self.get_gl_dict(
-                {
-                    "account": self.receivable_account,
-                    "party_type": "Student",
-                    "party": self.student,
-                    "debit": tax_gl_amount,
-                    "debit_in_account_currency": tax_gl_amount,
-                    "against_voucher": self.name,
-                    "against_voucher_type": self.doctype,
-                },
-                item=self,
-            ))
+            if self.taxes:
+                for i, tax in enumerate(self.taxes):
+                    tax_gl_amount += tax.tax_amount
+                gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": self.temporary_income_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "against": self.student,
+                        "credit": tax_gl_amount,
+                        "credit_in_account_currency": tax_gl_amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+                gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": self.receivable_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "debit": tax_gl_amount,
+                        "debit_in_account_currency": tax_gl_amount,
+                        "against_voucher": self.name,
+                        "against_voucher_type": self.doctype,
+                    },
+                    item=self,
+                ))
             for i, fee in enumerate(self.components):
                 fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
                 student_gl_entry = self.get_gl_dict(
@@ -278,6 +282,8 @@ class Fees(AccountsController):
             fee_gl_entry = self.get_gl_dict(
                 {
                     "account": self.temporary_income_account,
+                    "party_type": "Student",
+                    "party": self.student,
                     "against": self.student,
                     "credit": self.grand_total_before_tax,
                     "credit_in_account_currency": self.grand_total_before_tax,
