@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from erpnext.controllers.accounts_controller import AccountsController
-from frappe.utils import add_years, date_diff, getdate, nowdate
+from frappe.utils import add_years, date_diff, getdate, nowdate, add_months, add_days
 
 
 class StudentApplicant(AccountsController):
@@ -147,12 +147,12 @@ class StudentApplicant(AccountsController):
 
         student_admission = get_student_admission_data(
             self.student_admission, self.program)
-
+        
         if (
                 student_admission
                 and student_admission.min_age
                 and date_diff(
-                    nowdate(), add_years(getdate(self.date_of_birth), student_admission.min_age)
+                    nowdate(), add_days(getdate(self.date_of_birth), int(student_admission.min_age * 365))
                 )
                 < 0
         ):
@@ -164,7 +164,7 @@ class StudentApplicant(AccountsController):
                 student_admission
                 and student_admission.max_age
                 and date_diff(
-                    nowdate(), add_years(getdate(self.date_of_birth), student_admission.max_age)
+                    nowdate(), add_days(getdate(self.date_of_birth), int(student_admission.max_age * 365))
                 )
                 > 0
         ):
