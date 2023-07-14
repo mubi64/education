@@ -525,3 +525,11 @@ def get_student_dicount(student):
 	if fee_student.fee_discount_type:
 		return frappe.get_doc(
             'Fee Discount Type', fee_student.fee_discount_type)
+	
+
+@frappe.whitelist()
+def get_student_fee_details(student):
+	student_fee = frappe.get_all("Fees", filters=[
+		["student", "=", student],
+	], fields=["name", "student", "student_name", "due_date", "total_taxes_and_charges", "grand_total", "outstanding_amount"])
+	return student_fee

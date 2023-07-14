@@ -548,11 +548,40 @@ frappe.ui.form.on("Fees", {
     }
   },
 
+  discount_type: function (frm) {
+    if (frm.doc.discount_type !== "") {
+      if (frm.doc.percentage != 0 || frm.doc.discount_amount != 0) {
+        frm.trigger("calculate_total_amount");
+      }
+    }
+  },
+
+  percentage: function (frm) {
+    frm.trigger("calculate_total_amount");
+  },
+
+  discount_amount: function (frm) {
+    frm.trigger("calculate_total_amount");
+  },
+
   calculate_total_amount: function (frm) {
     var grand_total_before_tax = 0;
+    // var grand_total_after_discount = 0;
     for (var i = 0; i < frm.doc.components.length; i++) {
       grand_total_before_tax += frm.doc.components[i].amount;
     }
+    if (frm.doc.discount_type === "Amount") {
+      grand_total_before_tax = grand_total_before_tax - frm.doc.discount_amount;
+    }
+    if (frm.doc.discount_type === "Percentage") {
+      var percentage = frm.doc.percentage / 100;
+      grand_total_before_tax =
+        grand_total_before_tax - grand_total_before_tax * percentage;
+    }
+    console.log(
+      grand_total_before_tax,
+      "grand_total_before_tax grand_total_before_tax"
+    );
     frm.set_value("grand_total_before_tax", grand_total_before_tax);
     frm.trigger("taxes_and_charges");
   },

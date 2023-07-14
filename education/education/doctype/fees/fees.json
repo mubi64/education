@@ -33,6 +33,11 @@
   "fee_structure",
   "components",
   "section_break_10",
+  "discount_type",
+  "column_break_w8bnk",
+  "percentage",
+  "discount_amount",
+  "section_break_zqdhc",
   "taxes_and_charges",
   "taxes",
   "section_break_30",
@@ -419,11 +424,43 @@
    "fieldtype": "Data",
    "hidden": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "discount_type",
+   "fieldtype": "Select",
+   "label": "Discount Type",
+   "options": "\nPercentage\nAmount",
+   "print_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Percentage\"",
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "label": "Percentage",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Percentage\"",
+   "precision": "2",
+   "print_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Amount\"",
+   "fieldname": "discount_amount",
+   "fieldtype": "Float",
+   "label": "Discount Amount",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Amount\"",
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_w8bnk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_zqdhc",
+   "fieldtype": "Section Break"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-03-17 11:47:07.550883",
+ "modified": "2023-06-14 14:16:52.152842",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",

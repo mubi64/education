@@ -52,9 +52,6 @@ class Fees(AccountsController):
                         if discount.discount_type == "Percentage":
                             component.percentage = discount.percentage
                             percent = component.percentage / 100
-                            print(percent, "percent")
-                            print(component.gross_amount,
-                                  "omponent.gross_amount")
                             discount_amount = percent * component.gross_amount
                             component.amount = component.gross_amount - discount_amount
                         elif discount.discount_type == "Amount":
@@ -126,9 +123,26 @@ class Fees(AccountsController):
         taxes_amount = 0
         for i, tax in enumerate(self.taxes):
             taxes_amount += tax.tax_amount
+        if self.discount_type == "Amount":
+            self.grand_total = self.grand_total - self.discount_amount
+        
+        if self.discount_type == "Percentage":
+            percentage = self.percentage / 100
+            self.grand_total = self.grand_total - self.grand_total * percentage
+        
+        self.grand_total_before_tax = self.grand_total
+        if self.discount_type != "":
+            taxes_amount = 0
+            for i, row in enumerate(self.taxes):
+                rate_persent = row.rate / 100
+                amount = rate_persent * self.grand_total_before_tax
+                row.total = amount + self.grand_total_before_tax
+                row.tax_amount = amount
+                taxes_amount += amount
+
+
         self.total_taxes_and_charges = taxes_amount
         self.total_taxes_and_charges_company_currency = taxes_amount
-        self.grand_total_before_tax = self.grand_total
         self.grand_total += taxes_amount
         self.grand_total_in_words = money_in_words(self.grand_total)
         self.outstanding_amount = self.grand_total

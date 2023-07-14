@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-06-16 11:02:56.776295",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "student",
+  "get_student_details",
+  "column_break_m3jtq",
+  "family_code",
+  "section_break_cfg8p",
+  "student_fee_details",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "label": "Student",
+   "mandatory_depends_on": "eval:doc.family_group == null",
+   "options": "Student",
+   "read_only_depends_on": "eval:doc.family_group != null"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Fee Collections",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_m3jtq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_cfg8p",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "student_fee_details",
+   "fieldtype": "Table",
+   "label": "Student Fee Details",
+   "options": "Student Fee Details"
+  },
+  {
+   "fieldname": "family_code",
+   "fieldtype": "Int",
+   "label": "Family Code",
+   "mandatory_depends_on": "eval:doc.student == null",
+   "read_only_depends_on": "eval:doc.student != null"
+  },
+  {
+   "fieldname": "get_student_details",
+   "fieldtype": "Button",
+   "label": "Get Student Details"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-06-16 11:27:06.064864",
+ "modified_by": "Administrator",
+ "module": "Education",
+ "name": "Fee Collections",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
