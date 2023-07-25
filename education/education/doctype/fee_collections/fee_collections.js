@@ -2,32 +2,15 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Fee Collections", {
-  // after_save: function (frm) {
-  //   if (frm.doc.discount_type) {
-  //     for (let i = 0; i < frm.doc.student_fee_details.length; i++) {
-  //       const e = frm.doc.student_fee_details[i];
-  //       if (e.discount_type == "Percentage") {
-  //         if (
-  //           frm.doc.discount_type != e.discount_type ||
-  //           frm.doc.percentage != e.percentage
-  //         ) {
-  //           frm.trigger("get_student_details");
-  //           // frm.save()
-  //         }
-  //       } else {
-  //         if (
-  //           frm.doc.discount_type != e.discount_type &&
-  //           frm.doc.discount_amount != e.discount_amount
-  //         ) {
-  //           frm.trigger("get_student_details");
-  //         }
-  //       }
-  //     }
-  //   }
-  // },
+  // refresh: function(frm) {
 
+  // }
+  student: function (frm) {
+    if (frm.doc.student) {
+    }
+  },
   get_student_details: function (frm) {
-    frm.set_value("student_fee_details", "");
+	frm.set_value("student_fee_details", "");
     if (frm.doc.student) {
       frappe.call({
         method: "education.education.api.get_student_fee_details",
