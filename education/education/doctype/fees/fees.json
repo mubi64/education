@@ -33,11 +33,18 @@
   "fee_structure",
   "components",
   "section_break_10",
+  "discount_type",
+  "column_break_w8bnk",
+  "percentage",
+  "discount_amount",
+  "section_break_zqdhc",
   "taxes_and_charges",
   "taxes",
   "section_break_30",
   "total_taxes_and_charges_company_currency",
+  "amount_before_discount",
   "grand_total_before_tax",
+  "total_discount_amount",
   "column_break_11",
   "total_taxes_and_charges",
   "grand_total",
@@ -50,6 +57,7 @@
   "select_print_heading",
   "account",
   "receivable_account",
+  "fee_expense_account",
   "column_break_39",
   "income_account",
   "temporary_income_account",
@@ -419,11 +427,66 @@
    "fieldtype": "Data",
    "hidden": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "discount_type",
+   "fieldtype": "Select",
+   "label": "Discount Type",
+   "options": "\nPercentage\nAmount",
+   "print_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Percentage\"",
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "label": "Percentage",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Percentage\"",
+   "precision": "2",
+   "print_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Amount\"",
+   "fieldname": "discount_amount",
+   "fieldtype": "Float",
+   "label": "Discount Amount",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Amount\"",
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_w8bnk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_zqdhc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_discount_amount",
+   "fieldtype": "Float",
+   "label": "Total Discount Amount",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_before_discount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Amount Before Discount",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fee_expense_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Discount Receivable Account",
+   "mandatory_depends_on": "eval:doc.discount_type !== \"\"",
+   "options": "Account"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-03-17 11:47:07.550883",
+ "modified": "2023-07-20 12:40:51.163204",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",

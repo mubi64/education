@@ -146,40 +146,7 @@ def generate_fee(fee_schedule):
                     {"Fee Schedule": {"doctype": "Fees",
                                       "field_map": {"name": "Fee Schedule"}}},
                 )
-                # fee_student = frappe.get_doc('Student', student.student)
 
-                # if fee_student.fee_discount_type:
-                #     discount_doc = frappe.get_doc(
-                #         'Fee Discount Type', fee_student.fee_discount_type)
-                #     discounts = discount_doc.discount
-                #     for e, component in enumerate(fees_doc.components):
-                #         for i, discount in enumerate(discounts):
-                #             if component.fees_category == discount.fee_category:
-                #                 component.discount_type = discount.discount_type
-                #                 if discount.discount_type == "Percentage":
-                #                     component.percentage = discount.percentage
-                #                     percent = component.percentage / 100
-                #                     discount_amount = percent * component.gross_amount
-                #                     component.amount = component.gross_amount - discount_amount
-                #                 elif discount.discount_type == "Amount":
-                #                     component.discount_amount = discount.amount
-                #                     component.amount = component.gross_amount - component.discount_amount
-
-                # if fee_student.transportation_fee_structure:
-                #     transportation_student = frappe.get_doc(
-                #         'Transportation Fee Structure', fee_student.transportation_fee_structure)
-                #     doc.total_amount += transportation_student.fee_amount
-                #     insert = False
-                #     for i, comp in enumerate(fees_doc.components):
-                #         if comp.fees_category != transportation_student.fee_category:
-                #             insert = True
-                #         else:
-                #             insert = False
-                #     if insert:
-                #         row = fees_doc.append('components', {})
-                #         row.fees_category = transportation_student.fee_category
-                #         row.amount = transportation_student.fee_amount
-                #         row.gross_amount = transportation_student.fee_amount
                 taxes_amount = 0
                 rate = 0
                 for i, tax in enumerate(fees_doc.taxes):
@@ -198,7 +165,7 @@ def generate_fee(fee_schedule):
                 fees_doc.temporary_income_account = doc.temporary_income_account
                 fees_doc.send_payment_request = doc.send_email
                 fees_doc.save()
-                fees_doc.submit()
+                # fees_doc.submit()
                 created_records += 1
                 frappe.publish_realtime(
                     "fee_schedule_progress",
