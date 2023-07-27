@@ -13,6 +13,21 @@ app_license = "GNU GPL V3"
 
 required_apps = ["erpnext"]
 
+fixtures = [
+	{
+        "doctype":"Custom Field",
+		"filters":[
+			[
+				"fieldname",
+                "in",
+                (   
+                "amount_before_discount", "student_id"
+				)
+			]
+		]
+	}
+]
+
 # Includes in <head>
 # ------------------
 

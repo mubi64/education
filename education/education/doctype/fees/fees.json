@@ -42,7 +42,6 @@
   "taxes",
   "section_break_30",
   "total_taxes_and_charges_company_currency",
-  "amount_before_discount",
   "grand_total_before_tax",
   "total_discount_amount",
   "column_break_11",
@@ -468,14 +467,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "amount_before_discount",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Amount Before Discount",
-   "precision": "2",
-   "read_only": 1
-  },
-  {
    "fieldname": "fee_expense_account",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -486,7 +477,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-20 12:40:51.163204",
+ "modified": "2023-07-27 10:08:21.506551",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",
