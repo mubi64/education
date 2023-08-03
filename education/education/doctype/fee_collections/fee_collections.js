@@ -9,6 +9,14 @@ frappe.ui.form.on("Fee Collections", {
     if (frm.doc.student) {
     }
   },
+  discount_type: function (frm) {
+    frm.doc.percentage = 0,
+    frm.doc.discount_amount = 0
+    if (frm.doc.discount_type === "") {
+      frm.set_value('fee_expense_account', "")
+    }
+  },
+
   get_student_details: function (frm) {
 	  frm.set_value("student_fee_details", "");
     if (frm.doc.student) {

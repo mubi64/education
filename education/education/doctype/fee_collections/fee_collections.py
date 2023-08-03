@@ -29,7 +29,7 @@ class FeeCollections(Document):
 				cr_fee.save()
 				cr_fee.total_discount_amount = cr_fee.amount_before_discount - cr_fee.grand_total_before_tax
 				cr_fee.save()
-			else:
+			elif self.discount_type != "":
 				frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
 		self.update_student_table()
 
