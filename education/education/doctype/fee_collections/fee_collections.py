@@ -95,6 +95,7 @@ class FeeCollections(Document):
 		for fee in student_fees:
 			values = self.get_payment_entry("Fees", fee["fee"], fee, party_type="Student", payment_type="Receive")
 			values.insert()
+			values.submit()
 			
 
 	# def apply_discount(self):
