@@ -10,7 +10,7 @@ frappe.ui.form.on("Fee Collections", {
     }
   },
   get_student_details: function (frm) {
-	frm.set_value("student_fee_details", "");
+	  frm.set_value("student_fee_details", "");
     if (frm.doc.student) {
       frappe.call({
         method: "education.education.api.get_student_fee_details",

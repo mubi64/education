@@ -19,15 +19,18 @@ from erpnext.accounts.doctype.bank_account.bank_account import (
 class FeeCollections(Document):
 
 	def before_save(self):
-		for fee in self.student_fee_details:
+		for i, fee in enumerate(self.student_fee_details):
 			cr_fee = frappe.get_doc("Fees", fee.fees)
-			cr_fee.discount_type = self.discount_type
-			cr_fee.discount_amount = self.discount_amount
-			cr_fee.percentage = self.percentage
-			cr_fee.fee_expense_account = self.fee_expense_account
-			cr_fee.save()
-			cr_fee.total_discount_amount = cr_fee.amount_before_discount - cr_fee.grand_total_before_tax
-			cr_fee.save()
+			if cr_fee.docstatus != 1:
+				cr_fee.discount_type = self.discount_type
+				cr_fee.discount_amount = self.discount_amount
+				cr_fee.percentage = self.percentage
+				cr_fee.fee_expense_account = self.fee_expense_account
+				cr_fee.save()
+				cr_fee.total_discount_amount = cr_fee.amount_before_discount - cr_fee.grand_total_before_tax
+				cr_fee.save()
+			else:
+				frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
 		self.update_student_table()
 
 		
@@ -80,8 +83,9 @@ class FeeCollections(Document):
 
 		for item in self.student_fee_details:
 			current_fee = frappe.get_doc("Fees", item.fees)
-			current_fee.save()
-			current_fee.submit()
+			if current_fee.docstatus != 1:
+				current_fee.save()
+				current_fee.submit()
 			name = item.student_id
 			if name not in temp_dict:
 				temp_dict[name] = {"name": name, "amount": 0, "fee": ""}
