@@ -594,11 +594,33 @@ frappe.ui.form.on("Fee Component", {
     for (let i = 0; i < components.length; i++) {
       const component = components[i];
       if (component.discount_type == "Amount") {
+        ele.percentage = 0;
+        frm.fields_dict.components.grid.update_docfield_property(
+          "discount_amount",
+          "read_only",
+          0
+        );
+        frm.fields_dict.components.grid.update_docfield_property(
+          "percentage",
+          "read_only",
+          1
+        );
         if (component.discount_amount) {
           component.amount = component.gross_amount - component.discount_amount;
           component.discount_type = "Amount";
         }
       } else if (component.discount_type == "Percentage") {
+        ele.discount_amount = 0;
+        frm.fields_dict.components.grid.update_docfield_property(
+          "discount_amount",
+          "read_only",
+          1
+        );
+        frm.fields_dict.components.grid.update_docfield_property(
+          "percentage",
+          "read_only",
+          0
+        );
         if (component.percentage) {
           var percent = component.percentage / 100;
           var discount_amount = percent * component.gross_amount;
