@@ -265,7 +265,7 @@ class Fees(AccountsController):
 
                 recorded_gl_entries.append(self.get_gl_dict(
                     {
-                        "account": self.fee_expense_account,
+                        "account": self.income_account,
                         "party_type": "Student",
                         "party": self.student,
                         "against": self.student,
@@ -496,7 +496,7 @@ def record_income(fees, current_docname):
 
     gl_entries.append(current_doc.get_gl_dict(
         {
-            "account": current_doc.fee_expense_account,
+            "account": fee_doc.income_account,
             "party_type": "Student",
             "party": student,
             "against": fee_doc.income_account,
