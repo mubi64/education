@@ -43,7 +43,7 @@ class Fees(AccountsController):
         self.calculate_total()
 
     def set_late_fee_fine_and_readmission(self):
-        due_date = self.due_date
+        due_date = str(self.due_date)
         current_date = frappe.utils.today()
         fees_category_list = []
 

@@ -536,6 +536,19 @@ def get_student_fee_details(student = None, family_code = None):
 	student_fee = frappe.get_all("Fees", filters=[
 		["student", "in", student if family_code == None else student_list],
 		["outstanding_amount", "!=", 0],
-		# ["docstatus", "=", 0],
+		["docstatus", "!=", 2],
+	], fields=["name", "student", "student_name", "due_date", "amount_before_discount","total_taxes_and_charges", "grand_total", "grand_total_before_tax", "outstanding_amount", "discount_type", "percentage", "discount_amount"])
+	return student_fee
+
+@frappe.whitelist()
+def get_student_fee_details_not_submit(student = None, family_code = None):
+	if family_code:
+		student = frappe.get_all("Student", filters={'family_code': family_code})
+		student_list = [item['name'] for item in student]
+	
+	student_fee = frappe.get_all("Fees", filters=[
+		["student", "in", student if family_code == None else student_list],
+		["outstanding_amount", "!=", 0],
+		["docstatus", "=", 0],
 	], fields=["name", "student", "student_name", "due_date", "amount_before_discount","total_taxes_and_charges", "grand_total", "grand_total_before_tax", "outstanding_amount", "discount_type", "percentage", "discount_amount"])
 	return student_fee

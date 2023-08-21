@@ -63,6 +63,7 @@
    "read_only_depends_on": "eval:doc.student != null"
   },
   {
+   "depends_on": "eval:doc.docstatus == 0",
    "fieldname": "get_student_details",
    "fieldtype": "Button",
    "label": "Get Student Details"
@@ -116,16 +117,15 @@
   {
    "fieldname": "fee_expense_account",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Fee Expense Account",
-   "mandatory_depends_on": "eval:doc.discount_type !== \"\"",
    "options": "Account"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-20 12:52:26.902468",
+ "modified": "2023-08-21 16:11:22.885847",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

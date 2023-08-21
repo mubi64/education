@@ -7,7 +7,7 @@ import frappe
 from frappe import _, scrub
 from frappe.model.document import Document
 
-from education.education.api import get_student_fee_details
+from education.education.api import get_student_fee_details, get_student_fee_details_not_submit
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry, set_party_type, set_party_account, set_party_account_currency, set_payment_type, set_grand_total_and_outstanding_amount, set_paid_amount_and_received_amount, apply_early_payment_discount, get_reference_as_per_payment_terms, update_accounting_dimensions, split_early_payment_discount_loss, set_pending_discount_loss, get_bank_cash_account
 from frappe.utils import flt, getdate, nowdate
 from erpnext.accounts.doctype.bank_account.bank_account import (
@@ -31,12 +31,17 @@ class FeeCollections(Document):
 				cr_fee.save()
 			elif self.discount_type != "":
 				frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
-		self.update_student_table()
+		if self.discount_type != "":
+			self.update_student_table()
 
 		
 	def update_student_table(self):
 		if self.student:
-			fee_list = get_student_fee_details(self.student, None)
+			fee_list = []
+			if self.discount_type == "":
+				fee_list = get_student_fee_details(self.student, None)
+			else:
+				fee_list = get_student_fee_details_not_submit(self.student, None)
 			self.student_fee_details = []
 			for fee in fee_list:
 				row = self.append('student_fee_details', {})
@@ -55,7 +60,11 @@ class FeeCollections(Document):
 				row.allocated_amount = fee.outstanding_amount
 		
 		if self.family_code:
-			fee_list = get_student_fee_details(None, self.family_code)
+			fee_list= []
+			if self.discount_type == "":
+				fee_list = get_student_fee_details(self.student, None)
+			else:
+				fee_list = get_student_fee_details_not_submit(self.student, None)
 			self.student_fee_details = []
 			for fee in fee_list:
 				row = self.append('student_fee_details', {})
