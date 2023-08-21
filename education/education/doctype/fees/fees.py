@@ -107,6 +107,11 @@ class Fees(AccountsController):
                 tax_and_char = comp.amount * rate
                 comp.taxes_and_charges += tax_and_char
                 comp.amount_after_tax = comp.taxes_and_charges + comp.amount
+                tax.tax_amount = comp.taxes_and_charges
+                tax.total = comp.amount
+                # print(comp.amount, comp.taxes_and_charges, "text")
+                # tax.tax_amount = comp.taxt
+
 
         for i, tax in enumerate(self.taxes):
             if not tax.tax_amount or not tax.total:
@@ -114,6 +119,7 @@ class Fees(AccountsController):
                 tax.total = 0
                 rate = tax.rate / 100
                 for i, comp in enumerate(self.components):
+                    print(comp.taxes_and_charges, "checking")
                     tax.tax_amount += comp.amount * rate
                     tax.total += comp.taxes_and_charges + comp.amount
 
