@@ -36,10 +36,61 @@ class Fees(AccountsController):
     def validate(self):
         for i, comp in enumerate(self.components):
             comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
+        self.set_late_fee_fine_and_readmission()
         self.append_transportation()
         self.append_discount()
         self.set_missing_accounts_and_fields()
         self.calculate_total()
+
+    def set_late_fee_fine_and_readmission(self):
+        due_date = self.due_date
+        current_date = frappe.utils.today()
+        fees_category_list = []
+
+        if due_date < current_date:
+            diff_days = frappe.utils.date_diff(current_date,due_date)
+            for i in self.components:
+                if i.fees_category == "Late Fee Fine" or i.fees_category == "Re-Admission Fee":
+                    fees_category_list.append(i.fees_category)
+                
+            if diff_days <= 40 and diff_days > 0:
+                if "Late Fee Fine" not in fees_category_list:
+                    self.append("components",{
+                        "fees_category": "Late Fee Fine",
+                        "gross_amount": diff_days,
+                        "amount": diff_days
+                    })
+                else:
+                    for i in self.components:
+                        if i.fees_category == "Late Fee Fine":
+                            i.amount = diff_days
+                            i.gross_amount = diff_days
+                            
+                if "Re-Admission Fee" in fees_category_list:
+                    self.components = [i for i in self.components if i.fees_category != "Re-Admission Fee"]
+            elif diff_days > 40:
+                if "Late Fee Fine" not in fees_category_list:
+                    self.append("components",{
+                        "fees_category": "Late Fee Fine",
+                        "gross_amount": 40,
+                        "amount": 40
+                    })
+                else:
+                    for i in self.components:
+                        if i.fees_category == "Late Fee Fine":
+                            i.amount = 40
+                            i.gross_amount = 40
+                if "Re-Admission Fee" not in fees_category_list:
+                    self.append("components",{
+                        "fees_category": "Re-Admission Fee",
+                        "gross_amount": 50,
+                        "amount": 50
+                    })
+                else:
+                    for i in self.components:
+                        if i.fees_category == "Re-Admission Fee":
+                            i.amount = 50
+                            i.gross_amount = 50
 
     def append_discount(self):
         discount_doc = get_student_dicount(self.student)
@@ -100,6 +151,8 @@ class Fees(AccountsController):
     def calculate_total(self):
         """Calculates total amount."""
         tax_and_char = 0
+        tax_amount = 0
+        tax_total = 0
         for i, comp in enumerate(self.components):
             comp.taxes_and_charges = 0.0
             for i, tax in enumerate(self.taxes):
@@ -107,8 +160,10 @@ class Fees(AccountsController):
                 tax_and_char = comp.amount * rate
                 comp.taxes_and_charges += tax_and_char
                 comp.amount_after_tax = comp.taxes_and_charges + comp.amount
-                tax.tax_amount = comp.taxes_and_charges
-                tax.total = comp.amount
+                tax_amount += comp.taxes_and_charges
+                tax_total += comp.amount
+                tax.tax_amount = tax_amount
+                tax.total = tax_total
                 # print(comp.amount, comp.taxes_and_charges, "text")
                 # tax.tax_amount = comp.taxt
 
@@ -281,17 +336,28 @@ class Fees(AccountsController):
                     },
                     item=self,
                 ))
-
-            recorded_gl_entries.append(self.get_gl_dict(
-                {
-                    "account": income_account,
-                    "against": self.student,
-                    "credit": amount_before_discount,
-                    "credit_in_account_currency": amount_before_discount,
-                    "cost_center": self.cost_center,
-                },
-                item=self,
-            ))
+            for i, fee in enumerate(self.components):
+                fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
+                recorded_gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": fee_doc.income_account,
+                        "against": self.student,
+                        "credit": fee.amount,
+                        "credit_in_account_currency": fee.amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+                # recorded_gl_entries.append(self.get_gl_dict(
+                #     {
+                #         "account": income_account,
+                #         "against": self.student,
+                #         "credit": amount_before_discount,
+                #         "credit_in_account_currency": amount_before_discount,
+                #         "cost_center": self.cost_center,
+                #     },
+                #     item=self,
+                # ))
 
         else:
             if not self.components:
@@ -419,6 +485,18 @@ def get_list_context(context=None):
         "get_list": get_fee_list,
         "row_template": "templates/includes/fee/fee_row.html",
     }
+
+@frappe.whitelist()
+def record_payment(fees, current_docname):
+    fees = eval(fees)
+    if not fees:
+        return
+    current_doc = frappe.get_doc('Fees', current_docname)
+    for i, fee in enumerate(fees):
+        for i, comp in enumerate(current_doc.components):
+                if comp.fees_category == fee["fees_category"]:
+                    frappe.db.set_value('Fee Component', comp.name,
+                                        'income_recorded', 1, update_modified=True)
 
 
 @frappe.whitelist()
