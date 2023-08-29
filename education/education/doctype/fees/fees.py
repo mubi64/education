@@ -21,17 +21,8 @@ class Fees(AccountsController):
             self.indicator_color = "orange"
             self.indicator_title = _("Unpaid")
         else:
-            # isRecorded = True
-            # for i, fee in enumerate(self.components):
-            #     if fee.income_recorded == 0:
-            #         isRecorded = False
-            #         break
-            # if isRecorded:
             self.indicator_color = "green"
             self.indicator_title = _("Paid")
-            # else:
-            #     self.indicator_color = "orange"
-            #     self.indicator_title = _("Paid, Income not Recorded")
 
     def validate(self):
         for i, comp in enumerate(self.components):
@@ -163,7 +154,7 @@ class Fees(AccountsController):
                 tax_amount += comp.taxes_and_charges
                 tax_total += comp.amount
                 tax.tax_amount = tax_amount
-                tax.total = tax_total
+                tax.total = tax_total + tax.tax_amount
                 # print(comp.amount, comp.taxes_and_charges, "text")
                 # tax.tax_amount = comp.taxt
 

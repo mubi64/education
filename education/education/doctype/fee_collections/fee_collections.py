@@ -31,56 +31,63 @@ class FeeCollections(Document):
 				cr_fee.save()
 			elif self.discount_type != "":
 				frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
-		if self.discount_type != "":
-			self.update_student_table()
+		self.update_student_table()
 
 		
 	def update_student_table(self):
-		if self.student:
-			fee_list = []
-			if self.discount_type == "":
-				fee_list = get_student_fee_details(self.student, None)
-			else:
-				fee_list = get_student_fee_details_not_submit(self.student, None)
-			self.student_fee_details = []
-			for fee in fee_list:
-				row = self.append('student_fee_details', {})
-				row.fees = fee.name
-				row.student_id = fee.student
-				row.student_name = fee.student_name
-				row.discount_type = fee.discount_type
-				row.discount_amount = fee.discount_amount
-				row.percentage = fee.percentage
-				row.amount_before_discount = fee.amount_before_discount
-				row.due_date = fee.due_date
-				row.grand_total_before_tax = fee.grand_total_before_tax
-				row.total_amount = fee.grand_total
-				row.total_taxes_and_charges = fee.total_taxes_and_charges
-				row.outstanding_amount = fee.outstanding_amount
-				row.allocated_amount = fee.outstanding_amount
+		# if self.student:
+		fee_name_list = []
+		fee_list = []
+		self.grand_total = 0
+		for fee_doc in self.student_fee_details:
+			fee_name_list.append(fee_doc.fees)
+
+		fee_list = frappe.get_all("Fees", filters=[
+			["name", "in", fee_name_list],
+		], fields=["name", "student", "student_name", "due_date", "amount_before_discount","total_taxes_and_charges", "grand_total", "grand_total_before_tax", "outstanding_amount", "discount_type", "percentage", "discount_amount"])
+
+		self.student_fee_details = []
+		for fee in fee_list:
+			row = self.append('student_fee_details', {})
+			row.fees = fee.name
+			row.student_id = fee.student
+			row.student_name = fee.student_name
+			row.discount_type = fee.discount_type
+			row.discount_amount = fee.discount_amount
+			row.percentage = fee.percentage
+			row.amount_before_discount = fee.amount_before_discount
+			row.due_date = fee.due_date
+			row.grand_total_before_tax = fee.grand_total_before_tax
+			row.total_amount = fee.grand_total
+			row.total_taxes_and_charges = fee.total_taxes_and_charges
+			row.outstanding_amount = fee.outstanding_amount
+			row.allocated_amount = fee.outstanding_amount
+
+		for fee_doc in self.student_fee_details:
+			self.grand_total += fee_doc.total_amount	
 		
-		if self.family_code:
-			fee_list= []
-			if self.discount_type == "":
-				fee_list = get_student_fee_details(self.student, None)
-			else:
-				fee_list = get_student_fee_details_not_submit(self.student, None)
-			self.student_fee_details = []
-			for fee in fee_list:
-				row = self.append('student_fee_details', {})
-				row.fees = fee.name
-				row.student_id = fee.student
-				row.student_name = fee.student_name
-				row.discount_type = fee.discount_type
-				row.discount_amount = fee.discount_amount
-				row.percentage = fee.percentage
-				row.amount_before_discount = fee.amount_before_discount
-				row.due_date = fee.due_date
-				row.grand_total_before_tax = fee.grand_total_before_tax
-				row.total_amount = fee.grand_total
-				row.total_taxes_and_charges = fee.total_taxes_and_charges
-				row.outstanding_amount = fee.outstanding_amount
-				row.allocated_amount = fee.outstanding_amount
+		# if self.family_code:
+		# 	fee_list= []
+		# 	if self.discount_type == "":
+		# 		fee_list = get_student_fee_details(self.student, None)
+		# 	else:
+		# 		fee_list = get_student_fee_details_not_submit(self.student, None)
+		# 	self.student_fee_details = []
+		# 	for fee in fee_list:
+		# 		row = self.append('student_fee_details', {})
+		# 		row.fees = fee.name
+		# 		row.student_id = fee.student
+		# 		row.student_name = fee.student_name
+		# 		row.discount_type = fee.discount_type
+		# 		row.discount_amount = fee.discount_amount
+		# 		row.percentage = fee.percentage
+		# 		row.amount_before_discount = fee.amount_before_discount
+		# 		row.due_date = fee.due_date
+		# 		row.grand_total_before_tax = fee.grand_total_before_tax
+		# 		row.total_amount = fee.grand_total
+		# 		row.total_taxes_and_charges = fee.total_taxes_and_charges
+		# 		row.outstanding_amount = fee.outstanding_amount
+		# 		row.allocated_amount = fee.outstanding_amount
 
 	def on_submit(self):
 		# if self.discount_type != None:

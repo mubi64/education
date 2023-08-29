@@ -430,6 +430,7 @@
   {
    "fieldname": "discount_type",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Discount Type",
    "options": "\nPercentage\nAmount",
    "print_hide": 1
@@ -438,6 +439,7 @@
    "depends_on": "eval:doc.discount_type == \"Percentage\"",
    "fieldname": "percentage",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Percentage",
    "mandatory_depends_on": "eval:doc.discount_type == \"Percentage\"",
    "precision": "2",
@@ -447,6 +449,7 @@
    "depends_on": "eval:doc.discount_type == \"Amount\"",
    "fieldname": "discount_amount",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Discount Amount",
    "mandatory_depends_on": "eval:doc.discount_type == \"Amount\"",
    "precision": "2"
@@ -471,13 +474,12 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Discount Receivable Account",
-   "mandatory_depends_on": "eval:doc.discount_type !== \"\"",
    "options": "Account"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-27 10:08:21.506551",
+ "modified": "2023-08-29 14:02:43.050637",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",

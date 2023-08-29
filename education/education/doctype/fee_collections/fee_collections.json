@@ -18,6 +18,7 @@
   "discount_type",
   "mode_of_payment",
   "column_break_qzv7g",
+  "grand_total",
   "percentage",
   "discount_amount",
   "fee_expense_account",
@@ -53,7 +54,8 @@
    "fieldname": "student_fee_details",
    "fieldtype": "Table",
    "label": "Student Fee Details",
-   "options": "Student Fee Details"
+   "options": "Student Fee Details",
+   "reqd": 1
   },
   {
    "fieldname": "family_code",
@@ -120,12 +122,19 @@
    "hidden": 1,
    "label": "Fee Expense Account",
    "options": "Account"
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Grand Total",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-08-21 16:11:22.885847",
+ "modified": "2023-08-29 12:35:35.861928",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",
