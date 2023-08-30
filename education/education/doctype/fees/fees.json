@@ -473,13 +473,13 @@
    "fieldname": "fee_expense_account",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Discount Receivable Account",
+   "label": "Discount Expense Account",
    "options": "Account"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-08-29 14:02:43.050637",
+ "modified": "2023-08-30 13:14:10.096921",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",
