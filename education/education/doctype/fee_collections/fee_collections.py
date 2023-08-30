@@ -61,10 +61,7 @@ class FeeCollections(Document):
 			row.total_amount = fee.grand_total
 			row.total_taxes_and_charges = fee.total_taxes_and_charges
 			row.outstanding_amount = fee.outstanding_amount
-			row.allocated_amount = fee.outstanding_amount
-
-		for fee_doc in self.student_fee_details:
-			self.grand_total += fee_doc.total_amount	
+			self.grand_total += fee.outstanding_amount	
 		
 		# if self.family_code:
 		# 	fee_list= []
