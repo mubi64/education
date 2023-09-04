@@ -44,7 +44,9 @@ class FeeCollections(Document):
 
 		fee_list = frappe.get_all("Fees", filters=[
 			["name", "in", fee_name_list],
-		], fields=["name", "student", "student_name", "due_date", "amount_before_discount","total_taxes_and_charges", "grand_total", "grand_total_before_tax", "outstanding_amount", "discount_type", "percentage", "discount_amount"])
+		], fields=["name", "student", "student_name", "due_date", "amount_before_discount","total_taxes_and_charges", "grand_total", "grand_total_before_tax", "outstanding_amount", "discount_type", "percentage", "discount_amount"],
+		order_by="student_name asc"
+		)
 
 		self.student_fee_details = []
 		for fee in fee_list:
