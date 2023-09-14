@@ -15,14 +15,18 @@
   "section_break_cfg8p",
   "student_fee_details",
   "section_break_d4ocs",
-  "discount_type",
   "mode_of_payment",
   "column_break_qzv7g",
-  "grand_total",
-  "percentage",
-  "discount_amount",
   "fee_expense_account",
-  "amended_from"
+  "amended_from",
+  "section_break_mgagu",
+  "discount_type",
+  "grand_total_b_d",
+  "column_break_yhd7a",
+  "discount_amount",
+  "percentage",
+  "total_d_a",
+  "grand_total"
  ],
  "fields": [
   {
@@ -129,12 +133,30 @@
    "in_list_view": 1,
    "label": "Grand Total",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_mgagu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_yhd7a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "grand_total_b_d",
+   "fieldtype": "Data",
+   "label": "Grand Total before Discount "
+  },
+  {
+   "fieldname": "total_d_a",
+   "fieldtype": "Data",
+   "label": "Total Discount Amount"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-08-30 13:10:55.631847",
+ "modified": "2023-09-12 13:27:54.494044",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

@@ -10,15 +10,14 @@ frappe.ui.form.on("Fee Collections", {
     }
   },
   discount_type: function (frm) {
-    frm.doc.percentage = 0,
-    frm.doc.discount_amount = 0
+    (frm.doc.percentage = 0), (frm.doc.discount_amount = 0);
     if (frm.doc.discount_type === "") {
-      frm.set_value('fee_expense_account', "")
+      frm.set_value("fee_expense_account", "");
     }
   },
 
   get_student_details: function (frm) {
-	  frm.set_value("student_fee_details", "");
+    frm.set_value("student_fee_details", "");
     if (frm.doc.student) {
       frappe.call({
         method: "education.education.api.get_student_fee_details",
@@ -36,7 +35,8 @@ frappe.ui.form.on("Fee Collections", {
               row.discount_type = fee.discount_type;
               row.discount_amount = fee.discount_amount;
               row.percentage = fee.percentage;
-              row.amount_before_discount = fee.amount_before_discount;
+              row.amount_before_discount =
+                fee.grand_total + fee.total_discount_amount;
               row.due_date = fee.due_date;
               row.grand_total_before_tax = fee.grand_total_before_tax;
               row.total_amount = fee.grand_total;

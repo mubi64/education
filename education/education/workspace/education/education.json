@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"56v3lS3S5L\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"V-7H47fl89\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"X01E56AYjp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Student\",\"col\":3}},{\"id\":\"_EMYfxVNaG\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Instructor\",\"col\":3}},{\"id\":\"QUx4NR1pXf\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Course Schedule\",\"col\":3}},{\"id\":\"818WgG4CKO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Program\",\"col\":3}},{\"id\":\"5uIpRQ4UV_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Course\",\"col\":3}},{\"id\":\"EYch_ntWnP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scheduled Job Type\",\"col\":3}},{\"id\":\"8-JFkHSGpZ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fee Discount Type\",\"col\":3}},{\"id\":\"2BXq_Fg-zs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fee Discount\",\"col\":3}},{\"id\":\"TQRIIFWmXe\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Student Attendance Tool\",\"col\":3}},{\"id\":\"rL8QFearmx\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"2xNmyBeTNn\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"nkVco_UnDO\",\"type\":\"card\",\"data\":{\"card_name\":\"Student and Instructor\",\"col\":4}},{\"id\":\"nxt2FwjWpT\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"_2wEIE22Gp\",\"type\":\"card\",\"data\":{\"card_name\":\"Admission\",\"col\":4}},{\"id\":\"mY-NiGok_T\",\"type\":\"card\",\"data\":{\"card_name\":\"Schedule\",\"col\":4}},{\"id\":\"XdoOPE_tNL\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance\",\"col\":4}},{\"id\":\"_DOT-zUPWt\",\"type\":\"card\",\"data\":{\"card_name\":\"Assessment Reports\",\"col\":4}},{\"id\":\"fFw-0PEQdB\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}}]",
+ "content": "[{\"id\":\"56v3lS3S5L\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"V-7H47fl89\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"X01E56AYjp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Student\",\"col\":3}},{\"id\":\"_EMYfxVNaG\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Instructor\",\"col\":3}},{\"id\":\"QUx4NR1pXf\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Course Schedule\",\"col\":3}},{\"id\":\"818WgG4CKO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Program\",\"col\":3}},{\"id\":\"5uIpRQ4UV_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Course\",\"col\":3}},{\"id\":\"EYch_ntWnP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scheduled Job Type\",\"col\":3}},{\"id\":\"8-JFkHSGpZ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fee Discount Type\",\"col\":3}},{\"id\":\"2BXq_Fg-zs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fee Discount\",\"col\":3}},{\"id\":\"TQRIIFWmXe\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Student Attendance Tool\",\"col\":3}},{\"id\":\"LlJANtp-Ve\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fee Collection\",\"col\":3}},{\"id\":\"rL8QFearmx\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"2xNmyBeTNn\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"nkVco_UnDO\",\"type\":\"card\",\"data\":{\"card_name\":\"Student and Instructor\",\"col\":4}},{\"id\":\"nxt2FwjWpT\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"_2wEIE22Gp\",\"type\":\"card\",\"data\":{\"card_name\":\"Admission\",\"col\":4}},{\"id\":\"mY-NiGok_T\",\"type\":\"card\",\"data\":{\"card_name\":\"Schedule\",\"col\":4}},{\"id\":\"XdoOPE_tNL\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance\",\"col\":4}},{\"id\":\"_DOT-zUPWt\",\"type\":\"card\",\"data\":{\"card_name\":\"Assessment Reports\",\"col\":4}},{\"id\":\"fFw-0PEQdB\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}}]",
  "creation": "2020-03-02 17:22:57.066401",
  "custom_blocks": [],
  "docstatus": 0,
@@ -663,7 +663,7 @@
    "type": "Link"
   }
  ],
- "modified": "2023-08-15 13:36:25.215741",
+ "modified": "2023-09-12 12:59:58.193592",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Education",
@@ -689,6 +689,13 @@
    "label": "Student",
    "link_to": "Student",
    "stats_filter": "{\n    \"enabled\": 1\n}",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Fee Collection",
+   "link_to": "Fee Collections",
    "type": "DocType"
   },
   {

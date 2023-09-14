@@ -4,12 +4,12 @@
 
 import erpnext
 import frappe
-from erpnext.accounts.doctype.payment_request.payment_request import \
-    make_payment_request
+from datetime import datetime, timedelta
+from erpnext.accounts.doctype.payment_request.payment_request import make_payment_request
 from erpnext.accounts.general_ledger import make_reverse_gl_entries
 from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
-from frappe.utils import money_in_words
+from frappe.utils import money_in_words, add_months
 from frappe.utils.csvutils import getlink
 from frappe.query_builder import DocType
 
@@ -25,13 +25,35 @@ class Fees(AccountsController):
             self.indicator_title = _("Paid")
 
     def validate(self):
-        for i, comp in enumerate(self.components):
-            comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
-        self.set_late_fee_fine_and_readmission()
-        self.append_transportation()
-        self.append_discount()
-        self.set_missing_accounts_and_fields()
-        self.calculate_total()
+        fees_category_array = []
+        one_month_earlier = frappe.utils.add_months(self.posting_date, -1)
+
+        # Subtract one day
+        result_date = datetime.strptime(str(one_month_earlier), "%Y-%m-%d") + timedelta(days=1)
+        # print(one_month_earlier, result_date, "result_date")
+        for com in self.components:
+            fees_category_array.append(com.fees_category)
+        
+        print(fees_category_array, result_date, self.posting_date, "testing")
+        fee = frappe.db.get_all("Fees", filters=[
+                ['name', '!=', self.name],
+                ['docstatus', "!=", 2],
+                ['posting_date', 'between', [result_date, self.posting_date]],
+                ['student', "=", self.student],
+                ['Fee Component', 'fees_category', 'in', fees_category_array]
+            ], fields=["*"])
+
+        if len(fee) > 0:
+            # frappe.throw(_("Duplicating fee creation is not permitted."), status_code="404")
+            raise TypeError(_("Duplicating fee creation is not permitted."))
+        else:
+            for i, comp in enumerate(self.components):
+                comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
+            self.set_late_fee_fine_and_readmission()
+            self.append_transportation()
+            self.append_discount()
+            self.set_missing_accounts_and_fields()
+            self.calculate_total()
 
     def set_late_fee_fine_and_readmission(self):
         due_date = str(self.due_date)
@@ -165,7 +187,7 @@ class Fees(AccountsController):
                 tax.total = 0
                 rate = tax.rate / 100
                 for i, comp in enumerate(self.components):
-                    print(comp.taxes_and_charges, "checking")
+                    # print(comp.taxes_and_charges, "checking")
                     tax.tax_amount += comp.amount * rate
                     tax.total += comp.taxes_and_charges + comp.amount
 
