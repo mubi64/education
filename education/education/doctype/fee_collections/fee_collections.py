@@ -69,29 +69,7 @@ class FeeCollections(Document):
 			self.grand_total_b_d += row.amount_before_discount
 		
 		self.total_d_a = self.grand_total_b_d - self.grand_total
-		
-		# if self.family_code:
-		# 	fee_list= []
-		# 	if self.discount_type == "":
-		# 		fee_list = get_student_fee_details(self.student, None)
-		# 	else:
-		# 		fee_list = get_student_fee_details_not_submit(self.student, None)
-		# 	self.student_fee_details = []
-		# 	for fee in fee_list:
-		# 		row = self.append('student_fee_details', {})
-		# 		row.fees = fee.name
-		# 		row.student_id = fee.student
-		# 		row.student_name = fee.student_name
-		# 		row.discount_type = fee.discount_type
-		# 		row.discount_amount = fee.discount_amount
-		# 		row.percentage = fee.percentage
-		# 		row.amount_before_discount = fee.amount_before_discount
-		# 		row.due_date = fee.due_date
-		# 		row.grand_total_before_tax = fee.grand_total_before_tax
-		# 		row.total_amount = fee.grand_total
-		# 		row.total_taxes_and_charges = fee.total_taxes_and_charges
-		# 		row.outstanding_amount = fee.outstanding_amount
-		# 		row.allocated_amount = fee.outstanding_amount
+	
 
 	def on_submit(self):
 		# if self.discount_type != None:
@@ -122,115 +100,6 @@ class FeeCollections(Document):
 			values.insert()
 			values.submit()
 			
-
-	# def apply_discount(self):
-	# 	for fee in self.student_fee_details:
-	# 		current_fee = frappe.get_doc("Fees", fee.fees)
-	# 		current_fee.fee_expense_account = self.fee_expense_account
-	# 		if self.discount_type == "Percentage" and current_fee.discount_type == "Percentage":
-	# 			current_fee.percentage += self.percentage
-				
-	# 		# if current_fee.discount_type == "Amount":
-	# 		# 	frappe.throw(_('Discount Type not match'))
-	# 		# else:
-	# 		# 	current_fee.discount_type = "Percentage"
-	# 		# 	current_fee.percentage += self.percentage
-
-		
-	# 		elif self.discount_type == "Amount" and current_fee.discount_type == "Amount":
-	# 			current_fee.discount_amount += self.discount_amount
-	# 		# if current_fee.discount_type == "Percentage":
-	# 		# 	frappe.throw(_('Discount Type not match'))
-	# 		# else:
-	# 		# 	current_fee.discount_type = "Amount"
-	# 		# 	current_fee.discount_amount += self.discount_amount
-
-	# 		elif self.discount_type != "" and current_fee.discount_type == "":
-	# 			current_fee.discount_type = self.discount_type
-	# 			current_fee.discount_amount = self.discount_amount
-	# 			current_fee.percentage = self.percentage
-
-
-	# 		current_fee.save()
-	# 		current_fee.submit()
-
-		
-
-	# def make_payment_entry(self):
-		# combined_data = {}
-
-		# for entry in self.student_fee_details:
-		# 	name = entry.student_id
-		# 	amount = entry.outstanding_amount
-		# 	if name in combined_data:
-		# 		combined_data[name] += amount
-		# 	else:
-		# 		combined_data[name] = amount
-
-		# student_fee = [{"name": name, "amount": amount} for name, amount in combined_data.items()]
-
-	# 	student_fees = []
-	# 	temp_dict = {}
-
-	# 	for item in self.student_fee_details:
-	# 		name = item.student_id
-	# 		if name not in temp_dict:
-	# 			temp_dict[name] = {"name": name, "amount": 0, "fee": ""}
-			
-	# 		temp_dict[name]["amount"] += item.outstanding_amount
-	# 		print(item.student_id == temp_dict[name]["name"], item.student_id , temp_dict[name]["name"], "checking name list")
-	# 		if item.student_id == temp_dict[name]["name"]: 
-	# 			temp_dict[name]["fee"] = item.fees
-
-	# 	student_fees = list(temp_dict.values())
-
-	# 	print(student_fees, "Fees Checking")
-
-	# 	for fee in student_fees:
-	# 		doc = get_payment_entry("Fees", fee["fee"], party_type="Student", payment_type="Receive")
-	# 		doc.paid_amount = fee["amount"]
-	# 		# for student_fee in self.student_fee_details:
-	# 		# 	doc.append("references", {
-	# 		# 		"reference_doctype": "Fees",
-	# 		# 		"reference_name": student_fee.fees,
-	# 		# 		"allocated_amount": student_fee.outstanding_amount,
-	# 		# 	})
-	# 		doc.mode_of_payment = self.mode_of_payment
-	# 		doc.total_allocated_amount = fee["amount"]
-	# 		doc.paid_to = get_bank_cash_account(self.mode_of_payment, self.company).get("account")
-			
-	# 		print(doc.target_exchange_rate, "Print")
-	# 		print(doc.paid_to, "doc.paid_to")
-	# 		# doc.setup_party_account_field()
-	# 		# doc.set_missing_values()
-	# 		# doc.set_missing_ref_details()
-	# 		doc.set_exchange_rate()
-	# 		# doc.set_amounts()
-	# 		# doc.set_difference_amount()
-	# 		# doc.validate()
-	# 		doc.insert()
-	# 		# payment = frappe.new_doc("Payment Entry")
-	# 		# payment.mode_of_payment =  self.mode_of_payment
-	# 		# payment.party_type = "Student"
-	# 		# payment.party =  fee["name"]
-	# 		# payment.payment_type = "Receive"
-	# 		# payment.paid_amount =  fee["amount"]
-	# 		# payment.received_amount =  fee["amount"]
-	# 		# row = payment.append("references", {})
-	# 		# for category_fee in self.student_fee_details:
-	# 		# 	row.reference_doctype = "Fees"
-	# 		# 	row.reference_name = category_fee.fees
-	# 		# 	row.grand_total = category_fee.outstanding_amount
-	# 		# 	row.outstanding_amount = category_fee.outstanding_amount
-	# 		# 	row.allocated_amount = category_fee.outstanding_amount
-
-
-	# 		# print(payment.party_type, "Check payment entry")
-
-	# 		# payment.setup_party_account_field()
-	# 		# payment.set_missing_values()
-	# 		# payment.set_missing_ref_details()
-	# 		# payment.insert()
 
 	def get_payment_entry(
 		self,
@@ -408,3 +277,6 @@ class FeeCollections(Document):
 			pe.set_difference_amount()
 
 		return pe
+
+
+

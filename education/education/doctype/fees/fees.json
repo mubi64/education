@@ -469,11 +469,11 @@
    "options": "Account"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "fee_collections",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_global_search": 1,
    "label": "Fee Collections",
-   "options": "Fee Collections",
    "print_hide": 1,
    "read_only": 1
   },
@@ -489,7 +489,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-09-15 15:31:42.556399",
+ "modified": "2023-09-15 17:27:57.378367",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",
