@@ -10,6 +10,7 @@
   "naming_series",
   "student",
   "student_name",
+  "fee_collections",
   "fee_schedule",
   "include_payment",
   "send_payment_request",
@@ -91,15 +92,6 @@
    "fieldtype": "Data",
    "in_global_search": 1,
    "label": "Student Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "fee_schedule",
-   "fieldtype": "Link",
-   "in_global_search": 1,
-   "label": "Fee Schedule",
-   "options": "Fee Schedule",
-   "print_hide": 1,
    "read_only": 1
   },
   {
@@ -475,11 +467,29 @@
    "in_list_view": 1,
    "label": "Discount Expense Account",
    "options": "Account"
+  },
+  {
+   "fieldname": "fee_collections",
+   "fieldtype": "Link",
+   "in_global_search": 1,
+   "label": "Fee Collections",
+   "options": "Fee Collections",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "fee_schedule",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Fee Schedule",
+   "options": "Fee Schedule",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-08-30 13:14:10.096921",
+ "modified": "2023-09-15 15:31:42.556399",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",

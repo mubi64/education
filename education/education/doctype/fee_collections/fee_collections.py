@@ -104,6 +104,7 @@ class FeeCollections(Document):
 		for item in self.student_fee_details:
 			current_fee = frappe.get_doc("Fees", item.fees)
 			if current_fee.docstatus != 1:
+				current_fee.fee_collections = self.name
 				current_fee.save()
 				current_fee.submit()
 			name = item.student_id
