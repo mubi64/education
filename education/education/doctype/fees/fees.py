@@ -4,12 +4,11 @@
 
 import erpnext
 import frappe
-from datetime import datetime, timedelta
 from erpnext.accounts.doctype.payment_request.payment_request import make_payment_request
 from erpnext.accounts.general_ledger import make_reverse_gl_entries
 from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
-from frappe.utils import money_in_words, add_months
+from frappe.utils import money_in_words, add_months, add_days, flt
 from frappe.utils.csvutils import getlink
 from frappe.query_builder import DocType
 
@@ -26,15 +25,13 @@ class Fees(AccountsController):
 
     def validate(self):
         fees_category_array = []
-        one_month_earlier = frappe.utils.add_months(self.posting_date, -1)
-
+        one_month_earlier = add_months(self.posting_date, -1)
         # Subtract one day
-        result_date = datetime.strptime(str(one_month_earlier), "%Y-%m-%d") + timedelta(days=1)
-        # print(one_month_earlier, result_date, "result_date")
+        # result_date = one_month_earlier + timedelta(days=1)
+        result_date = add_days(one_month_earlier, 1)
         for com in self.components:
             fees_category_array.append(com.fees_category)
         
-        print(fees_category_array, result_date, self.posting_date, "testing")
         fee = frappe.db.get_all("Fees", filters=[
                 ['name', '!=', self.name],
                 ['docstatus', "!=", 2],
@@ -199,13 +196,13 @@ class Fees(AccountsController):
         for i, tax in enumerate(self.taxes):
             taxes_amount += tax.tax_amount
         self.amount_before_discount = self.grand_total
-        self.total_discount_amount = self.amount_before_discount - self.grand_total_before_tax
+        self.total_discount_amount = flt(self.amount_before_discount) - flt(self.grand_total_before_tax)
         if self.discount_type == "Amount":
-            self.grand_total = self.grand_total - self.discount_amount
+            self.grand_total = flt(self.grand_total) - flt(self.discount_amount)
         
         if self.discount_type == "Percentage":
             percentage = self.percentage / 100
-            self.grand_total = self.grand_total - self.grand_total * percentage
+            self.grand_total = flt(self.grand_total) - flt(self.grand_total * percentage)
         
         self.grand_total_before_tax = self.grand_total
         if self.discount_type != "":
