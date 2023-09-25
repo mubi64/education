@@ -150,13 +150,14 @@
   {
    "fieldname": "total_d_a",
    "fieldtype": "Data",
-   "label": "Total Discount Amount"
+   "label": "Total Discount Amount",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-09-12 13:27:54.494044",
+ "modified": "2023-09-25 16:12:50.240229",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

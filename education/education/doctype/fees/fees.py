@@ -337,8 +337,8 @@ class Fees(AccountsController):
                 recorded_gl_entries.append(self.get_gl_dict(
                     {
                         "account": self.fee_expense_account,
-                        "party_type": "Student",
-                        "party": self.student,
+                        # "party_type": "Student",
+                        # "party": self.student,
                         "against": self.student,
                         "debit": total_discount_amount,
                         "debit_in_account_currency": total_discount_amount,

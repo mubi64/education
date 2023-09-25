@@ -422,26 +422,26 @@
   {
    "fieldname": "discount_type",
    "fieldtype": "Select",
-   "hidden": 1,
    "label": "Discount Type",
    "options": "\nPercentage\nAmount",
-   "print_hide": 1
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.discount_type == \"Percentage\"",
    "fieldname": "percentage",
    "fieldtype": "Float",
-   "hidden": 1,
    "label": "Percentage",
    "mandatory_depends_on": "eval:doc.discount_type == \"Percentage\"",
    "precision": "2",
-   "print_hide": 1
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.discount_type == \"Amount\"",
    "fieldname": "discount_amount",
    "fieldtype": "Float",
-   "hidden": 1,
+   "in_list_view": 1,
    "label": "Discount Amount",
    "mandatory_depends_on": "eval:doc.discount_type == \"Amount\"",
    "precision": "2"
@@ -489,7 +489,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-09-15 17:27:57.378367",
+ "modified": "2023-09-25 16:09:52.319344",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",
