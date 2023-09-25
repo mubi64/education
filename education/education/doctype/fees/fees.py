@@ -297,7 +297,7 @@ class Fees(AccountsController):
                             "account": receivable_account,
                             "party_type": "Student",
                             "party": self.student,
-                            "against": tax.account_head,
+                            "against": income_account, # tax.account_head,
                             "debit": tax.tax_amount,
                             "debit_in_account_currency": tax.tax_amount,
                             "against_voucher": self.name,
@@ -326,7 +326,7 @@ class Fees(AccountsController):
                         "account": receivable_account,
                         "party_type": "Student",
                         "party": self.student,
-                        "against": self.student,
+                        "against":  income_account, # self.student,
                         "credit": total_discount_amount,
                         "credit_in_account_currency": total_discount_amount,
                         "cost_center": self.cost_center,
@@ -336,7 +336,7 @@ class Fees(AccountsController):
 
                 recorded_gl_entries.append(self.get_gl_dict(
                     {
-                        "account": self.income_account,
+                        "account": self.fee_expense_account,
                         "party_type": "Student",
                         "party": self.student,
                         "against": self.student,
