@@ -16,17 +16,24 @@
   "student_fee_details",
   "section_break_d4ocs",
   "mode_of_payment",
+  "net_total",
+  "net_total_a_d",
   "column_break_qzv7g",
   "fee_expense_account",
-  "amended_from",
+  "discount",
   "section_break_mgagu",
   "discount_type",
-  "grand_total_b_d",
+  "total_d_a",
   "column_break_yhd7a",
   "discount_amount",
   "percentage",
-  "total_d_a",
-  "grand_total"
+  "section_break_nuvg0",
+  "grand_total_b_tax",
+  "grand_total_b_d",
+  "column_break_vdgfs",
+  "total_tax_a",
+  "grand_total",
+  "amended_from"
  ],
  "fields": [
   {
@@ -79,6 +86,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "default": "Percentage",
    "fieldname": "discount_type",
    "fieldtype": "Select",
    "label": "Discount Type",
@@ -89,6 +97,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "5",
    "depends_on": "eval:doc.discount_type == \"Percentage\"",
    "fieldname": "percentage",
    "fieldtype": "Float",
@@ -135,8 +144,10 @@
    "read_only": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "section_break_mgagu",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Additional Discount"
   },
   {
    "fieldname": "column_break_yhd7a",
@@ -148,16 +159,66 @@
    "label": "Grand Total before Discount "
   },
   {
+   "default": "0",
    "fieldname": "total_d_a",
-   "fieldtype": "Data",
+   "fieldtype": "Float",
    "label": "Total Discount Amount",
+   "precision": "2",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "grand_total_b_tax",
+   "fieldtype": "Float",
+   "label": "Grand Total before Tax",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_tax_a",
+   "fieldtype": "Float",
+   "label": "Total Tax Amount",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "net_total",
+   "fieldtype": "Float",
+   "label": "Net Total",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "net_total_a_d",
+   "fieldtype": "Float",
+   "label": "Net Total after Discount",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "discount",
+   "fieldtype": "Float",
+   "label": "Discount",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_nuvg0",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_vdgfs",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-09-25 16:12:50.240229",
+ "modified": "2023-09-26 12:46:07.866230",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

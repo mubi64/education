@@ -40,6 +40,12 @@ class FeeCollections(Document):
 		fee_list = []
 		self.grand_total = 0
 		self.grand_total_b_d = 0
+		self.grand_total_b_tax = 0
+		self.total_tax_a = 0
+		self.total_d_a = 0
+		self.net_total = 0
+		self.discount = 0
+		self.net_total_a_d = 0
 		for fee_doc in self.student_fee_details:
 			fee_name_list.append(fee_doc.fees)
 
@@ -48,6 +54,7 @@ class FeeCollections(Document):
 		], fields=["*"],
 		order_by="student_name asc"
 		)
+		
 
 		self.student_fee_details = []
 		for fee in fee_list:
@@ -58,17 +65,25 @@ class FeeCollections(Document):
 			row.discount_type = fee.discount_type
 			row.discount_amount = fee.discount_amount
 			row.percentage = fee.percentage
-			row.amount_before_discount = fee.grand_total + fee.total_discount_amount
+			row.amount_before_discount = fee.amount_before_discount
 			row.due_date = fee.due_date
 			row.grand_total_before_tax = fee.grand_total_before_tax
 			row.total_amount = fee.grand_total
 			row.total_taxes_and_charges = fee.total_taxes_and_charges
 			row.outstanding_amount = fee.outstanding_amount
 			row.allocated_amount = fee.outstanding_amount
+			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
+			for fee_com in fee_child_com.components:
+				dis_amount = fee_com.gross_amount - fee_com.amount
+				self.net_total += fee_com.gross_amount
+				self.discount += dis_amount
+				self.net_total_a_d += fee_com.amount
+
 			self.grand_total += fee.outstanding_amount
+			self.grand_total_b_tax += row.grand_total_before_tax
+			self.total_tax_a += row.total_taxes_and_charges
 			self.grand_total_b_d += row.amount_before_discount
-		
-		self.total_d_a = self.grand_total_b_d - self.grand_total
+			self.total_d_a += fee.total_discount_amount
 	
 
 	def on_submit(self):
