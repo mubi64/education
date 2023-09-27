@@ -9,7 +9,7 @@ from frappe.model.document import Document
 
 from education.education.api import get_student_fee_details, get_student_fee_details_not_submit
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry, set_party_type, set_party_account, set_party_account_currency, set_payment_type, set_grand_total_and_outstanding_amount, set_paid_amount_and_received_amount, apply_early_payment_discount, get_reference_as_per_payment_terms, update_accounting_dimensions, split_early_payment_discount_loss, set_pending_discount_loss, get_bank_cash_account
-from frappe.utils import flt, getdate, nowdate
+from frappe.utils import flt, getdate, nowdate, formatdate
 from erpnext.accounts.doctype.bank_account.bank_account import (
 	get_party_bank_account,
 )
@@ -72,6 +72,7 @@ class FeeCollections(Document):
 			row.total_taxes_and_charges = fee.total_taxes_and_charges
 			row.outstanding_amount = fee.outstanding_amount
 			row.allocated_amount = fee.outstanding_amount
+			row.month = formatdate(fee.posting_date, "MMMM-yyyy")
 			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
 			for fee_com in fee_child_com.components:
 				dis_amount = fee_com.gross_amount - fee_com.amount

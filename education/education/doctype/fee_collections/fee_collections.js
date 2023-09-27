@@ -43,6 +43,7 @@ frappe.ui.form.on("Fee Collections", {
               row.total_taxes_and_charges = fee.total_taxes_and_charges;
               row.outstanding_amount = fee.outstanding_amount;
               row.allocated_amount = fee.outstanding_amount;
+              row.month = fee.posting_date;
             }
           }
           refresh_field("student_fee_details");

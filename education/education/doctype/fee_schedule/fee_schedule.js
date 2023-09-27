@@ -158,6 +158,21 @@ frappe.ui.form.on("Fee Schedule", {
                     student_group: ele.name,
                     total_students: r.message,
                   });
+                  // Sort the array by the "name" property
+                  frm.doc.student_groups.sort((a, b) => {
+                    const nameA = a.student_group.toUpperCase(); // Convert names to uppercase for case-insensitive sorting
+                    const nameB = b.student_group.toUpperCase();
+
+                    if (nameA < nameB) {
+                      return -1;
+                    }
+
+                    if (nameA > nameB) {
+                      return 1;
+                    }
+
+                    return 0; // Names are equal
+                  });
                   refresh_field("student_groups");
                 }
               },
