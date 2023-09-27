@@ -1,7 +1,6 @@
 # Copyright (c) 2015, Frappe Technologies and contributors
 # For license information, please see license.txt
 
-
 import erpnext
 import frappe
 from erpnext.accounts.doctype.payment_request.payment_request import make_payment_request

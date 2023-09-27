@@ -79,7 +79,7 @@
    "depends_on": "eval:doc.docstatus == 0",
    "fieldname": "get_student_details",
    "fieldtype": "Button",
-   "label": "Get Student Details"
+   "label": "Get outstanding Fee"
   },
   {
    "fieldname": "section_break_d4ocs",
@@ -218,7 +218,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-09-26 12:46:07.866230",
+ "modified": "2023-09-27 14:34:00.104237",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

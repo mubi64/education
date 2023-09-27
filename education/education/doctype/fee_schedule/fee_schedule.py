@@ -77,6 +77,7 @@ class FeeSchedule(Document):
         no_of_students = 0
         for d in self.student_groups:
             # if not d.total_students:
+            d.total_students = 0
             d.total_students = get_total_students(
                 d.student_group, self.academic_year, self.academic_term, self.student_category
             )
@@ -92,6 +93,7 @@ class FeeSchedule(Document):
                         d.student_group
                     )
                 )
+        print(type(self.total_taxes_and_charges), type(self.grand_total_before_tax))
         self.grand_total_before_tax = no_of_students * self.total_amount
         self.grand_total = self.total_taxes_and_charges + self.grand_total_before_tax
         self.grand_total_in_words = money_in_words(self.grand_total)
@@ -229,6 +231,7 @@ def get_students(
 def get_total_students(
         student_group, academic_year, academic_term=None, student_category=None
 ):
+    print(student_group, "checig")
     total_students = get_students(
         student_group, academic_year, academic_term, student_category
     )

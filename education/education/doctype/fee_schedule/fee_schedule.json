@@ -20,6 +20,7 @@
   "academic_term",
   "section_break_10",
   "currency",
+  "get_student_groups",
   "student_groups",
   "section_break_14",
   "components",
@@ -141,8 +142,7 @@
   {
    "fieldname": "student_groups",
    "fieldtype": "Table",
-   "options": "Fee Schedule Student Group",
-   "reqd": 1
+   "options": "Fee Schedule Student Group"
   },
   {
    "fieldname": "section_break_14",
@@ -314,6 +314,7 @@
    "read_only": 1
   },
   {
+   "default": "0",
    "fieldname": "total_taxes_and_charges_company_currency",
    "fieldtype": "Currency",
    "label": "Total Taxes and Charges (Company Currency)",
@@ -351,15 +352,21 @@
    "fieldtype": "Section Break"
   },
   {
+   "default": "0",
    "fieldname": "grand_total_before_tax",
    "fieldtype": "Float",
    "label": "Grand Total before Tax",
    "precision": "2"
+  },
+  {
+   "fieldname": "get_student_groups",
+   "fieldtype": "Button",
+   "label": "Get Student Groups"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-02-24 11:03:16.341063",
+ "modified": "2023-09-27 14:16:41.100136",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Schedule",
