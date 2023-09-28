@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.email.doctype.email_group.email_group import add_subscribers
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import cstr, flt, getdate
+from frappe.utils import cstr, flt, getdate, today
 
 
 def get_course(program):
@@ -525,7 +525,35 @@ def get_student_dicount(student):
 	if fee_student.fee_discount_type:
 		return frappe.get_doc(
             'Fee Discount Type', fee_student.fee_discount_type)
+
+
+@frappe.whitelist()
+def get_advanced_student_fee(student = None, family_code = None):
+	if family_code:
+		student = frappe.get_all("Student", filters={'family_code': family_code})
+		student_list = [item['name'] for item in student]
 	
+	student_fee = frappe.get_all("Fees", filters=[
+		["student", "in", student if family_code == None else student_list],
+		["outstanding_amount", "!=", 0],
+		["docstatus", "!=", 2],
+		["due_date", ">=", today()],
+	], fields=["*"])
+	return student_fee	
+
+@frappe.whitelist()
+def get_outstanding_student_fee(student = None, family_code = None):
+	if family_code:
+		student = frappe.get_all("Student", filters={'family_code': family_code})
+		student_list = [item['name'] for item in student]
+	
+	student_fee = frappe.get_all("Fees", filters=[
+		["student", "in", student if family_code == None else student_list],
+		["outstanding_amount", "!=", 0],
+		["docstatus", "!=", 2],
+		["due_date", "<", today()],
+	], fields=["*"])
+	return student_fee
 
 @frappe.whitelist()
 def get_student_fee_details(student = None, family_code = None):
