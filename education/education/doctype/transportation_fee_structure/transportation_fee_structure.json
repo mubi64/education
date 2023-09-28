@@ -10,9 +10,13 @@
  "field_order": [
   "vehicle",
   "fee_amount",
+  "dependant_fee_category",
   "column_break_2",
   "area",
-  "fee_category"
+  "fee_category",
+  "section_break_hiy2c",
+  "select_all_months",
+  "transportation_fee_structure_months"
  ],
  "fields": [
   {
@@ -50,11 +54,34 @@
    "label": "Fee Category",
    "options": "Fee Category",
    "reqd": 1
+  },
+  {
+   "fieldname": "dependant_fee_category",
+   "fieldtype": "Link",
+   "label": "Dependant Fee Category",
+   "options": "Fee Category",
+   "precision": "2"
+  },
+  {
+   "fieldname": "section_break_hiy2c",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "transportation_fee_structure_months",
+   "fieldtype": "Table",
+   "label": "Transportation Fee Structure Months",
+   "options": "Transportation Fee Structure Months",
+   "reqd": 1
+  },
+  {
+   "fieldname": "select_all_months",
+   "fieldtype": "Button",
+   "label": "Select all Months"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-02-24 15:58:44.002707",
+ "modified": "2023-09-28 17:42:04.737575",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Transportation Fee Structure",

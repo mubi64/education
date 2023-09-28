@@ -10,6 +10,7 @@ from frappe import _
 from frappe.utils import money_in_words, add_months, add_days, flt
 from frappe.utils.csvutils import getlink
 from frappe.query_builder import DocType
+from datetime import datetime
 
 
 class Fees(AccountsController):
@@ -121,20 +122,23 @@ class Fees(AccountsController):
     def append_transportation(self):
         fee_student = frappe.get_doc('Student', self.student)
         if fee_student.transportation_fee_structure:
-            transportation_student = frappe.get_doc(
-                'Transportation Fee Structure', fee_student.transportation_fee_structure)
+            trans_student = frappe.get_doc(
+                'Transportation Fee Structure', fee_student.transportation_fee_structure, fields=['*'])
             # self.total_amount += transportation_student.fee_amount
-            insert = False
-            for i, comp in enumerate(self.components):
-                if comp.fees_category != transportation_student.fee_category:
-                    insert = True
-                else:
-                    insert = False
-            if insert:
-                row = self.append('components', {})
-                row.fees_category = transportation_student.fee_category
-                row.amount = transportation_student.fee_amount
-                row.gross_amount = transportation_student.fee_amount
+            fees_category_array = []
+            # print(frappe.utils.getdate(self.posting_date) >= frappe.utils.getdate(str(fee_student.start_date)), self.posting_date, fee_student.start_date, "test")
+            for comp in self.components:
+                fees_category_array.append(comp.fees_category)
+            for comp in self.components:
+                for month in trans_student.transportation_fee_structure_months:
+                    posting_month = frappe.utils.formatdate(self.posting_date, "MM")
+                    if posting_month >= month.month_number:
+                        if trans_student.fee_category not in fees_category_array and trans_student.dependant_fee_category == comp.fees_category and frappe.utils.getdate(str(self.posting_date)) >= frappe.utils.getdate(str(fee_student.start_date)):
+                            fees_category_array.append(trans_student.fee_category)
+                            row = self.append('components', {})
+                            row.fees_category = trans_student.fee_category
+                            row.amount = trans_student.fee_amount
+                            row.gross_amount = trans_student.fee_amount
 
     def set_missing_accounts_and_fields(self):
         if not self.company:

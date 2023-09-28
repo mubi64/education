@@ -1,0 +1,32 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-09-28 16:58:25.306712",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "month_number"
+ ],
+ "fields": [
+  {
+   "fieldname": "month_number",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month Number",
+   "options": "\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-09-28 17:00:45.402827",
+ "modified_by": "Administrator",
+ "module": "Education",
+ "name": "Transportation Fee Structure Months",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

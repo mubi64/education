@@ -51,6 +51,11 @@
   "student_name",
   "transportations_tab",
   "transportation_fee_structure",
+  "column_break_q7ao4",
+  "start_date",
+  "section_break_lmahy",
+  "select_all_months",
+  "transportation_fee_structure_months",
   "discount_tab",
   "fee_discount_type",
   "connections_tab"
@@ -304,11 +309,36 @@
    "fieldtype": "Link",
    "label": "Fee Discount Type",
    "options": "Fee Discount Type"
+  },
+  {
+   "fieldname": "column_break_q7ao4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "mandatory_depends_on": "eval:doc.transportation_fee_structure != null"
+  },
+  {
+   "fieldname": "section_break_lmahy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "select_all_months",
+   "fieldtype": "Button",
+   "label": "Select all Months"
+  },
+  {
+   "fieldname": "transportation_fee_structure_months",
+   "fieldtype": "Table",
+   "label": "Transportation Fee Structure Months",
+   "options": "Transportation Fee Structure Months"
   }
  ],
  "image_field": "image",
  "links": [],
- "modified": "2023-03-17 10:51:42.904297",
+ "modified": "2023-09-28 17:41:05.290700",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Student",

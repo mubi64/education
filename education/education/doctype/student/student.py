@@ -24,6 +24,20 @@ class Student(Document):
 			self.check_unique()
 			self.update_applicant_status()
 
+		if self.transportation_fee_structure:
+			trans_doc = frappe.get_doc("Transportation Fee Structure", self.transportation_fee_structure)
+			for st_month in trans_doc.transportation_fee_structure_months:
+				if st_month not in self.transportation_fee_structure_months:
+					st_fee_list = frappe.db.get_all("Fees", fields=['name'], filters={
+						"student": self.name,
+						"posting_date": [">=", self.start_date]
+					})
+					for fee in st_fee_list:
+						st_fee = frappe.get_doc("Fees", fee.name)
+						st_fee.save()
+				
+
+
 	def validate_dates(self):
 		for sibling in self.siblings:
 			if sibling.date_of_birth and getdate(sibling.date_of_birth) > getdate():
