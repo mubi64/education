@@ -49,7 +49,7 @@
   "column_break_31",
   "reason_for_leaving",
   "student_name",
-  "transportations_tab",
+  "transportation_tab",
   "transportation_fee_structure",
   "column_break_q7ao4",
   "start_date",
@@ -289,11 +289,6 @@
    "show_dashboard": 1
   },
   {
-   "fieldname": "transportations_tab",
-   "fieldtype": "Tab Break",
-   "label": "Transportations"
-  },
-  {
    "fieldname": "transportation_fee_structure",
    "fieldtype": "Link",
    "label": "Transportation Fee Structure",
@@ -332,13 +327,18 @@
   {
    "fieldname": "transportation_fee_structure_months",
    "fieldtype": "Table",
-   "label": "Transportation Fee Structure Months",
+   "label": "Excluded Transportation Months",
    "options": "Transportation Fee Structure Months"
+  },
+  {
+   "fieldname": "transportation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Transportation"
   }
  ],
  "image_field": "image",
  "links": [],
- "modified": "2023-09-28 17:41:05.290700",
+ "modified": "2023-09-29 18:23:45.524160",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Student",

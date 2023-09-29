@@ -18,7 +18,15 @@
   "accounting_section",
   "account_paid_to",
   "column_break_13",
-  "income_account"
+  "income_account",
+  "fees_settings_section",
+  "late_fee_category",
+  "dependent_late_fee_category",
+  "late_fee_amount",
+  "column_break_feess",
+  "readmission_fee_category",
+  "readmission_threshold_days",
+  "readmission_fee_amount"
  ],
  "fields": [
   {
@@ -102,11 +110,57 @@
   {
    "fieldname": "column_break_13",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fees_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Fees Settings"
+  },
+  {
+   "fieldname": "late_fee_category",
+   "fieldtype": "Link",
+   "label": "Late Fee Category",
+   "options": "Fee Category"
+  },
+  {
+   "fieldname": "readmission_fee_category",
+   "fieldtype": "Link",
+   "label": "Re-Admission Fee Category",
+   "options": "Fee Category"
+  },
+  {
+   "fieldname": "readmission_threshold_days",
+   "fieldtype": "Int",
+   "label": "Re-Admission Threshold Days",
+   "mandatory_depends_on": "eval:doc.readmission_fee_category != null"
+  },
+  {
+   "fieldname": "dependent_late_fee_category",
+   "fieldtype": "Link",
+   "label": "Dependent Late Fee Category",
+   "options": "Fee Category"
+  },
+  {
+   "fieldname": "column_break_feess",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "late_fee_amount",
+   "fieldtype": "Float",
+   "label": "Late Fee Amount",
+   "mandatory_depends_on": "eval:doc.late_fee_category != null",
+   "precision": "2"
+  },
+  {
+   "fieldname": "readmission_fee_amount",
+   "fieldtype": "Float",
+   "label": "Re-Admission Fee Amount",
+   "mandatory_depends_on": "eval:doc.readmission_fee_category != null"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-03-16 10:50:18.064933",
+ "modified": "2023-09-29 14:10:34.670476",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Education Settings",

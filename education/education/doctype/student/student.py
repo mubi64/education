@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.desk.form.linked_with import get_linked_doctypes
 from frappe.model.document import Document
-from frappe.utils import getdate, today
+from frappe.utils import getdate, today, now
 
 from education.education.utils import (check_content_completion,
                                        check_quiz_completion)
@@ -24,19 +24,18 @@ class Student(Document):
 			self.check_unique()
 			self.update_applicant_status()
 
-		if self.transportation_fee_structure:
-			trans_doc = frappe.get_doc("Transportation Fee Structure", self.transportation_fee_structure)
-			for st_month in trans_doc.transportation_fee_structure_months:
-				if st_month not in self.transportation_fee_structure_months:
-					st_fee_list = frappe.db.get_all("Fees", fields=['name'], filters={
-						"student": self.name,
-						"posting_date": [">=", self.start_date]
-					})
-					for fee in st_fee_list:
-						st_fee = frappe.get_doc("Fees", fee.name)
-						st_fee.save()
-				
 
+	def on_update(self):
+		if self.transportation_fee_structure:
+			st_fee_list = frappe.db.get_all("Fees", fields=['name', 'is_paid'], filters={
+				"student": self.name,
+				"posting_date": [">=", self.start_date]
+			})
+			for fee in st_fee_list:
+				st_fee = frappe.get_doc("Fees", fee.name)
+				st_fee.validate()
+				st_fee.save()
+				frappe.reload_doc("Education", "Fees", st_fee.name)
 
 	def validate_dates(self):
 		for sibling in self.siblings:

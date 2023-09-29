@@ -215,13 +215,13 @@ after_install = "education.install.after_install"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"education.tasks.all"
 # 	],
-# 	"daily": [
-# 		"education.tasks.daily"
-# 	],
+	"daily": [
+		"education.education.doctype.fees.fees.set_late_fee_fine_and_readmission_scheduler"
+	],
 # 	"hourly": [
 # 		"education.tasks.hourly"
 # 	],
@@ -231,7 +231,7 @@ after_install = "education.install.after_install"
 # 	"monthly": [
 # 		"education.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
