@@ -2,9 +2,29 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Fee Collections", {
-  // refresh: function(frm) {
+  refresh: async function (frm) {
+    frm
+      .get_field("get_outstanding_fees")
+      .$input.addClass("btn-warning")
+      .css({ "background-color": "#ffc101" });
+    frm
+      .get_field("get_advance_fees")
+      .$input.addClass("btn-success")
+      .css({ "background-color": "#28a745", color: "white" });
+    if (frm.doc.docstatus == 1 && frm.doc.is_return == 0) {
+      var doc = await frappe.call("education.education.api.get_refund_link", {
+        name: frm.doc.name,
+      });
+      if (doc.message) {
+        frm.add_custom_button(__("Make Refund"), async function () {
+          frm.doc.is_return = 1;
+          frm.doc.refund_against = frm.doc.name;
+          frm.copy_doc();
+        });
+      }
+    }
+  },
 
-  // }
   student: function (frm) {
     if (frm.doc.student) {
     }
@@ -16,8 +36,7 @@ frappe.ui.form.on("Fee Collections", {
     }
   },
 
-  get_outstanding_fee: function (frm) {
-    frm.set_value("student_fee_details", "");
+  get_outstanding_fees: function (frm) {
     frappe.call({
       method: "education.education.api.get_outstanding_student_fee",
       args: frm.doc.student
@@ -29,6 +48,7 @@ frappe.ui.form.on("Fee Collections", {
           },
       callback: function (r) {
         if (r.message) {
+          frm.set_value("student_fee_details", "");
           for (let i = 0; i < r.message.length; i++) {
             var row = frappe.model.add_child(frm.doc, "student_fee_details");
             const fee = r.message[i];
@@ -38,8 +58,7 @@ frappe.ui.form.on("Fee Collections", {
             row.discount_type = fee.discount_type;
             row.discount_amount = fee.discount_amount;
             row.percentage = fee.percentage;
-            row.amount_before_discount =
-              fee.grand_total + fee.total_discount_amount;
+            row.amount_before_discount = fee.amount_before_discount;
             row.due_date = fee.due_date;
             row.grand_total_before_tax = fee.grand_total_before_tax;
             row.total_amount = fee.grand_total;
@@ -54,8 +73,7 @@ frappe.ui.form.on("Fee Collections", {
     });
   },
 
-  get_advanced_fee: function (frm) {
-    frm.set_value("student_fee_details", "");
+  get_advance_fees: function (frm) {
     frappe.call({
       method: "education.education.api.get_advanced_student_fee",
       args: frm.doc.student
@@ -67,6 +85,7 @@ frappe.ui.form.on("Fee Collections", {
           },
       callback: function (r) {
         if (r.message) {
+          frm.set_value("student_fee_details", "");
           for (let i = 0; i < r.message.length; i++) {
             var row = frappe.model.add_child(frm.doc, "student_fee_details");
             const fee = r.message[i];
@@ -76,8 +95,7 @@ frappe.ui.form.on("Fee Collections", {
             row.discount_type = fee.discount_type;
             row.discount_amount = fee.discount_amount;
             row.percentage = fee.percentage;
-            row.amount_before_discount =
-              fee.grand_total + fee.total_discount_amount;
+            row.amount_before_discount = fee.amount_before_discount;
             row.due_date = fee.due_date;
             row.grand_total_before_tax = fee.grand_total_before_tax;
             row.total_amount = fee.grand_total;
@@ -91,34 +109,4 @@ frappe.ui.form.on("Fee Collections", {
       },
     });
   },
-  // if (frm.doc.family_code) {
-  //   frappe.call({
-  //     method: "education.education.api.get_outstanding_student_fee",
-  //     args: {
-  //       family_code: frm.doc.family_code,
-  //     },
-  //     callback: function (r) {
-  //       if (r.message) {
-  //         for (let i = 0; i < r.message.length; i++) {
-  //           var row = frappe.model.add_child(frm.doc, "student_fee_details");
-  //           const fee = r.message[i];
-  //           row.fees = fee.name;
-  //           row.student_id = fee.student;
-  //           row.student_name = fee.student_name;
-  //           row.discount_type = fee.discount_type;
-  //           row.discount_amount = fee.discount_amount;
-  //           row.percentage = fee.percentage;
-  //           row.due_date = fee.due_date;
-  //           row.grand_total_before_tax = fee.grand_total_before_tax;
-  //           row.total_amount = fee.grand_total;
-  //           row.total_taxes_and_charges = fee.total_taxes_and_charges;
-  //           row.outstanding_amount = fee.outstanding_amount;
-  //           row.allocated_amount = fee.outstanding_amount;
-  //         }
-  //       }
-  //       refresh_field("student_fee_details");
-  //     },
-  //   });
-  // }
-  // },
 });

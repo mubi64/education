@@ -55,25 +55,7 @@ frappe.ui.form.on("Fees", {
     erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
   },
 
-  // validate: function (frm) {
-  // 	if (frm.doc.outstanding_amount == 0) {
-  // 		var isRecorded = true
-  // 		for (let i = 0; i < frm.doc.components.length; i++) {
-  // 			if (frm.doc.components[i].income_recorded === 0) {
-  // 				isRecorded = false
-  // 				break
-  // 			}
-  // 		}
-  // 		if (!isRecorded) {
-  // 			frm.page.set_indicator(__("Paid, Income not Recorded"), "orange")
-  // 			// frm.set_value("doc_status", "Paid, Income not Recorded");
-  // 		}
-  // 	}
-  // },
-
   befor_save: async function (frm) {
-    // var com = await
-    // console.log(com, "Sdflsdkgsh");
     if (frm.doc.taxes_and_charges) {
       await frm.trigger("taxes_and_charges");
     }
@@ -90,26 +72,6 @@ frappe.ui.form.on("Fees", {
       });
       refresh_field("components");
     }
-    // setTimeout(() => {
-    //   frm.page.remove_inner_button("Duplicate", "Menu");
-    // }, 1000);
-    // if (frm.doc.docstatus == 1) {
-    // 	if (frm.doc.outstanding_amount > 0) {
-    // 		frm.page.set_indicator(__("Unpaid"), "orange")
-    // 	} else {
-    // 		var isRecorded = true
-    // 		for (let i = 0; i < frm.doc.components.length; i++) {
-    // 			if (frm.doc.components[i].income_recorded === 0) {
-    // 				isRecorded = false
-    // 				break
-    // 			}
-    // 		}
-    // 		if (!isRecorded) {
-    // 			frm.page.set_indicator(__("Paid, Income not Recorded"), "orange")
-    // 			// frm.doc.doc_status = "Paid, Income not Recorded"
-    // 		}
-    // 	}
-    // }
     if (frm.doc.docstatus == 0 && frm.doc.set_posting_time) {
       frm.set_df_property("posting_date", "read_only", 0);
       frm.set_df_property("posting_time", "read_only", 0);

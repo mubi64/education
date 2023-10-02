@@ -19,24 +19,27 @@ from erpnext.accounts.doctype.bank_account.bank_account import (
 class FeeCollections(Document):
 
 	def before_save(self):
-		for i, fee in enumerate(self.student_fee_details):
-			cr_fee = frappe.get_doc("Fees", fee.fees)
-			if cr_fee.docstatus != 1:
-				cr_fee.discount_type = self.discount_type
-				cr_fee.discount_amount = self.discount_amount
-				cr_fee.percentage = self.percentage
-				cr_fee.fee_expense_account = self.fee_expense_account
-				cr_fee.save()
-				cr_fee.total_discount_amount = cr_fee.amount_before_discount - cr_fee.grand_total_before_tax
-				cr_fee.save()
-			elif self.discount_type != "":
-				frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
-		self.update_student_table()
+		if self.is_return == 0:
+			for i, fee in enumerate(self.student_fee_details):
+				cr_fee = frappe.get_doc("Fees", fee.fees)
+				if cr_fee.docstatus != 1:
+					cr_fee.update({
+						"discount_type": self.discount_type,
+						"discount_amount": self.discount_amount,
+						"percentage": self.percentage,
+						"fee_expense_account": self.fee_expense_account
+					})
+					cr_fee.total_discount_amount = cr_fee.amount_before_discount - cr_fee.grand_total_before_tax
+					cr_fee.save()
+				elif self.discount_type != "":
+					frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
+			self.update_student_table()
+				
 
 		
 	def update_student_table(self):
 		# if self.student:
-		fee_name_list = []
+		fee_name_list = [fee.fees for fee in self.student_fee_details]
 		fee_list = []
 		self.grand_total = 0
 		self.grand_total_b_d = 0
@@ -46,14 +49,8 @@ class FeeCollections(Document):
 		self.net_total = 0
 		self.discount = 0
 		self.net_total_a_d = 0
-		for fee_doc in self.student_fee_details:
-			fee_name_list.append(fee_doc.fees)
 
-		fee_list = frappe.get_all("Fees", filters=[
-			["name", "in", fee_name_list],
-		], fields=["*"],
-		order_by="student_name asc"
-		)
+		fee_list = frappe.get_all("Fees", filters=[["name", "in", fee_name_list]], fields=["*"], order_by="student_name asc")
 		
 
 		self.student_fee_details = []
@@ -73,6 +70,7 @@ class FeeCollections(Document):
 			row.outstanding_amount = fee.outstanding_amount
 			row.allocated_amount = fee.outstanding_amount
 			row.month = formatdate(fee.posting_date, "MMMM-yyyy")
+			
 			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
 			for fee_com in fee_child_com.components:
 				dis_amount = fee_com.gross_amount - fee_com.amount
@@ -88,33 +86,45 @@ class FeeCollections(Document):
 	
 
 	def on_submit(self):
-		# if self.discount_type != None:
-		# 	print("heeelo World 7")
-		# 	self.apply_discount()
-		# # self.make_payment_entry()
-		student_fees = []
-		temp_dict = {}
+		if self.is_return == 1:
+			for item in self.student_fee_details:
+				fee_doc = frappe.get_doc("Fees", item.fees, fields=['*'])
+				print(fee_doc, "listi check")
+				if fee_doc.outstanding_amount == 0:
+					fee_doc.is_return = 1
+					fee_doc.save()
+					fee_doc.make_return_gl_entries()
+				payment = frappe.db.get_list("Payment Entry", filters=[
+					["Payment Entry Reference", "reference_name", "=", item.fees]
+				], fields=['name'])
+				if len(payment) > 0:
+					payment_entry = frappe.get_doc("Payment Entry", payment[0].name)
+					payment_entry.cancel()
 
-		for item in self.student_fee_details:
-			current_fee = frappe.get_doc("Fees", item.fees)
-			if current_fee.docstatus != 1:
-				current_fee.fee_collections = self.name
-				current_fee.save()
-				current_fee.submit()
-			name = item.student_id
-			if name not in temp_dict:
-				temp_dict[name] = {"name": name, "amount": 0, "fee": ""}
-			
-			temp_dict[name]["amount"] += item.outstanding_amount
-			if item.student_id == temp_dict[name]["name"]: 
-				temp_dict[name]["fee"] = item.fees
+		else:
+			student_fees = []
+			temp_dict = {}
 
-		student_fees = list(temp_dict.values())
+			for item in self.student_fee_details:
+				current_fee = frappe.get_doc("Fees", item.fees)
+				if current_fee.docstatus != 1:
+					current_fee.fee_collections = self.name
+					current_fee.save()
+					current_fee.submit()
+				name = item.student_id
+				if name not in temp_dict:
+					temp_dict[name] = {"name": name, "amount": 0, "fee": ""}
+				
+				temp_dict[name]["amount"] += item.outstanding_amount
+				if item.student_id == temp_dict[name]["name"]: 
+					temp_dict[name]["fee"] = item.fees
 
-		for fee in student_fees:
-			values = self.get_payment_entry("Fees", fee["fee"], fee, party_type="Student", payment_type="Receive")
-			values.insert()
-			values.submit()
+			student_fees = list(temp_dict.values())
+
+			for fee in student_fees:
+				values = self.get_payment_entry("Fees", fee["fee"], fee, party_type="Student", payment_type="Receive")
+				values.insert()
+				values.submit()
 			
 
 	def get_payment_entry(

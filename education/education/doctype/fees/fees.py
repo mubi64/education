@@ -16,7 +16,10 @@ from datetime import datetime
 class Fees(AccountsController):
     def set_indicator(self):
         """Set indicator for portal"""
-        if self.outstanding_amount > 0:
+        if self.is_return == 1:
+            self.indicator_color = "gray"
+            self.indicator_title = _("Refund")
+        elif self.outstanding_amount > 0:
             self.indicator_color = "orange"
             self.indicator_title = _("Unpaid")
         else:
@@ -24,7 +27,6 @@ class Fees(AccountsController):
             self.indicator_title = _("Paid")
 
     def validate(self):
-        print("oruting testing")
         fees_category_array = []
         one_month_earlier = add_months(self.posting_date, -1)
         # Subtract one day
@@ -42,8 +44,7 @@ class Fees(AccountsController):
             ], fields=["*"])
 
         if len(fee) > 0:
-            # frappe.throw(_("Duplicating fee creation is not permitted."), status_code="404")
-            raise TypeError(_("Duplicating fee creation is not permitted."))
+            raise TypeError(_("duplicate message: Fee already exists in the system for the same month"))
         else:
             for i, comp in enumerate(self.components):
                 comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
@@ -502,6 +503,191 @@ class Fees(AccountsController):
             merge_entries=False,
         )
 
+    def make_return_gl_entries(self):
+        if not self.grand_total:
+            return
+            
+        recorded_gl_entries = []
+        gl_entries = []
+        temporary_income_account = self.temporary_income_account
+        receivable_account = self.receivable_account
+        income_account = self.income_account
+        total_discount_amount = self.total_discount_amount
+        amount_before_discount = self.amount_before_discount
+        tax_gl_amount = sum(tax.tax_amount for tax in self.taxes) if self.taxes else 0
+        
+        if not self.record_income_in_temp_account:
+            if self.taxes:
+                for i, tax in enumerate(self.taxes):
+                    recorded_gl_entries.append(self.get_gl_dict(
+                        {
+                            "account": tax.account_head,
+                            "against": self.student,
+                            "debit": tax.tax_amount,
+                            "debit_in_account_currency": tax.tax_amount,
+                            "cost_center": self.cost_center,
+                        },
+                        item=self,
+                    ))
+                    recorded_gl_entries.append(self.get_gl_dict(
+                        {
+                            "account": receivable_account,
+                            "party_type": "Student",
+                            "party": self.student,
+                            "against": income_account, # tax.account_head,
+                            "credit": tax.tax_amount,
+                            "credit_in_account_currency": tax.tax_amount,
+                            "against_voucher": self.name,
+                            "against_voucher_type": self.doctype,
+                        },
+                        item=self,
+                    ))
+
+            for i, fee in enumerate(self.components):
+                recorded_gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": receivable_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "against": income_account,
+                        "credit": fee.amount,
+                        "credit_in_account_currency": fee.amount,
+                        "against_voucher": self.name,
+                        "against_voucher_type": self.doctype,
+                    },
+                    item=self,
+                ))
+            if self.discount_type != "":
+                recorded_gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": receivable_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "against":  income_account, # self.student,
+                        "debit": total_discount_amount,
+                        "debit_in_account_currency": total_discount_amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+
+                recorded_gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": self.fee_expense_account,
+                        # "party_type": "Student",
+                        # "party": self.student,
+                        "against": self.student,
+                        "credit": total_discount_amount,
+                        "credit_in_account_currency": total_discount_amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+            for i, fee in enumerate(self.components):
+                fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
+                recorded_gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": fee_doc.income_account,
+                        "against": self.student,
+                        "debit": fee.amount,
+                        "debit_in_account_currency": fee.amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+        else:
+            if not self.components:
+                return
+            if self.taxes:
+                # for i, tax in enumerate(self.taxes):
+                #     tax_gl_amount += tax.tax_amount
+                gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": temporary_income_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "against": self.student,
+                        "debit": tax_gl_amount,
+                        "debit_in_account_currency": tax_gl_amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+                gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": receivable_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "credit": tax_gl_amount,
+                        "credit_in_account_currency": tax_gl_amount,
+                        "against_voucher": self.name,
+                        "against_voucher_type": self.doctype,
+                    },
+                    item=self,
+                ))
+            for i, fee in enumerate(self.components):
+                fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
+                gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": fee_doc.receivable_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "against": fee_doc.income_account,
+                        "credit": fee.amount,
+                        "credit_in_account_currency": fee.amount,
+                        "against_voucher": self.name,
+                        "against_voucher_type": self.doctype,
+                    },
+                    item=self,
+                ))
+                
+            gl_entries.append(self.get_gl_dict(
+                {
+                    "account": temporary_income_account,
+                    "party_type": "Student",
+                    "party": self.student,
+                    "against": self.student,
+                    "debit": amount_before_discount,
+                    "debit_in_account_currency": amount_before_discount,
+                    "cost_center": self.cost_center,
+                },
+                item=self,
+            ))
+            
+            if self.discount_type != "":
+                gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": receivable_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "against": self.student,
+                        "debit": total_discount_amount,
+                        "debit_in_account_currency": total_discount_amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+
+                gl_entries.append(self.get_gl_dict(
+                    {
+                        "account": temporary_income_account,
+                        "party_type": "Student",
+                        "party": self.student,
+                        "against": self.student,
+                        "credit": total_discount_amount,
+                        "credit_in_account_currency": total_discount_amount,
+                        "cost_center": self.cost_center,
+                    },
+                    item=self,
+                ))
+
+        from erpnext.accounts.general_ledger import make_gl_entries
+        make_gl_entries(
+            recorded_gl_entries if not self.record_income_in_temp_account else gl_entries,
+            cancel=(self.docstatus == 2),
+            update_outstanding="Yes",
+            merge_entries=False,
+        )
 
 def get_fee_list(
         doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified"
