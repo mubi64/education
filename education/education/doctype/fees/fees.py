@@ -7,10 +7,11 @@ from erpnext.accounts.doctype.payment_request.payment_request import make_paymen
 from erpnext.accounts.general_ledger import make_reverse_gl_entries
 from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
+from frappe.model.mapper import get_mapped_doc
 from frappe.utils import money_in_words, add_months, add_days, flt
 from frappe.utils.csvutils import getlink
 from frappe.query_builder import DocType
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Fees(AccountsController):
@@ -44,12 +45,24 @@ class Fees(AccountsController):
             ], fields=["*"])
 
         if len(fee) > 0:
-            raise TypeError(_("duplicate message: Fee already exists in the system for the same month"))
+            raise TypeError(_("Fee already exists in the system for the same month"))
         else:
             for i, comp in enumerate(self.components):
                 comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
-            self.set_late_fee_fine_and_readmission()
-            self.append_transportation()
+            # self.set_late_fee_fine_and_readmission()
+
+            #transportation
+            # fee_student = frappe.get_doc('Student', self.student)
+            # trans_student = frappe.get_doc(
+            #     'Transportation Fee Structure', fee_student.transportation_fee_structure, fields=['*'])
+            # fees_category_array = []
+            # for comp in self.components:
+            #     fees_category_array.append(comp.fees_category)
+
+            # if trans_student.fee_category in fees_category_array:
+            #     self.append_transportation()
+            #transportation END
+
             self.append_discount()
             self.set_missing_accounts_and_fields()
             self.calculate_total()
@@ -59,67 +72,86 @@ class Fees(AccountsController):
         current_date = frappe.utils.today()
         fees_category_list = []
 
-        st_fee_list = frappe.db.get_all("Fees", fields=['*'], filters={
-            "student": self.student
-        }, order_by="posting_date ASC")
+        vacation_list = frappe.db.get_all("Vacation", fields=['*'], filters=[
+            ["year_start_date", "<=", self.posting_date],
+            ["year_end_date", ">", self.posting_date],
+        ])
+        months = []  # Initialize an empty list for the output
+        # frappe
+        if len(vacation_list) > 0:
+            vacation = frappe.get_doc("Vacation", vacation_list[0].name)
+            for period in vacation.get("vacation_periods"):
+                # start_month = frappe.utils.formatdate(period, "MM")
+                months.extend(get_month_numbers_between_dates(period.vacation_start_date, period.vacation_end_date))
+
         
+        st_fee_list = frappe.db.get_all("Fees", fields=['*'], filters={
+            "student": self.student,
+            "docstatus": 0
+        }, order_by="posting_date ASC")
+        is_late_fee_applied = False
         if len(st_fee_list) > 0:
-            stu_fee = frappe.get_doc("Fees", st_fee_list[0].name, fields=['*'])
+            for fee in st_fee_list:
+                posting_month = fee.posting_date.month
+                if posting_month not in months and not is_late_fee_applied:
+                    is_late_fee_applied = True
+                    stu_fee = frappe.get_doc("Fees", fee, fields=['*'])
 
-            if stu_fee.name == self.name:
-                education_settings = frappe.get_doc("Education Settings")
+                    education_settings = frappe.get_doc("Education Settings")
 
-                if (education_settings.dependent_late_fee_category 
-                    and education_settings.readmission_threshold_days
-                    and education_settings.late_fee_category
-                    and education_settings.late_fee_amount
-                    and education_settings.readmission_fee_category
-                    and education_settings.readmission_fee_amount):
-                    if due_date < current_date:
-                        diff_days = frappe.utils.date_diff(current_date,due_date)
-                        for i in self.components:
-                            # if i.fees_category == "Late Fee Fine" or i.fees_category == "Re-Admission Fee":
-                            fees_category_list.append(i.fees_category)
+                    if (education_settings.dependent_late_fee_category 
+                        and education_settings.readmission_threshold_days
+                        and education_settings.late_fee_category
+                        and education_settings.late_fee_amount
+                        and education_settings.readmission_fee_category
+                        and education_settings.readmission_fee_amount):
+                        if due_date < current_date:
+                            diff_days = frappe.utils.date_diff(current_date,due_date)
+                            for i in self.components:
+                                # if i.fees_category == "Late Fee Fine" or i.fees_category == "Re-Admission Fee":
+                                fees_category_list.append(i.fees_category)
 
-                        if education_settings.dependent_late_fee_category in fees_category_list:
-                            if diff_days <= education_settings.readmission_threshold_days and diff_days > 0:
-                                if education_settings.late_fee_category not in fees_category_list:
-                                    self.append("components",{
-                                        "fees_category": education_settings.late_fee_category,
-                                        "gross_amount": diff_days * education_settings.late_fee_amount,
-                                        "amount": diff_days * education_settings.late_fee_amount
-                                    })
-                                else:
-                                    for i in self.components:
-                                        if i.fees_category == education_settings.late_fee_category:
-                                            i.amount = diff_days * education_settings.late_fee_amount
-                                            i.gross_amount = diff_days * education_settings.late_fee_amount
-                                            
-                                if education_settings.readmission_fee_category in fees_category_list:
-                                    self.components = [i for i in self.components if i.fees_category != education_settings.readmission_fee_category]
-                            elif diff_days > education_settings.readmission_threshold_days:
-                                if education_settings.late_fee_category not in fees_category_list:
-                                    self.append("components",{
-                                        "fees_category": education_settings.late_fee_category,
-                                        "gross_amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount,
-                                        "amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                    })
-                                else:
-                                    for i in self.components:
-                                        if i.fees_category == education_settings.late_fee_category:
-                                            i.amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                            i.gross_amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                if education_settings.readmission_fee_category not in fees_category_list:
-                                    self.append("components",{
-                                        "fees_category": education_settings.readmission_fee_category,
-                                        "gross_amount": education_settings.readmission_fee_amount,
-                                        "amount": education_settings.readmission_fee_amount
-                                    })
-                                else:
-                                    for i in self.components:
-                                        if i.fees_category == education_settings.readmission_fee_category:
-                                            i.amount = education_settings.readmission_fee_amount
-                                            i.gross_amount = education_settings.readmission_fee_amount
+                            if education_settings.dependent_late_fee_category in fees_category_list:
+                                if diff_days <= education_settings.readmission_threshold_days and diff_days > 0:
+                                    if education_settings.late_fee_category not in fees_category_list:
+                                        self.append("components",{
+                                            "fees_category": education_settings.late_fee_category,
+                                            "gross_amount": diff_days * education_settings.late_fee_amount,
+                                            "amount": diff_days * education_settings.late_fee_amount
+                                        })
+                                    else:
+                                        for i in self.components:
+                                            if i.fees_category == education_settings.late_fee_category:
+                                                i.amount = diff_days * education_settings.late_fee_amount
+                                                i.gross_amount = diff_days * education_settings.late_fee_amount
+                                                
+                                    if education_settings.readmission_fee_category in fees_category_list:
+                                        self.components = [i for i in self.components if i.fees_category != education_settings.readmission_fee_category]
+                                elif diff_days > education_settings.readmission_threshold_days:
+                                    if education_settings.late_fee_category not in fees_category_list:
+                                        self.append("components",{
+                                            "fees_category": education_settings.late_fee_category,
+                                            "gross_amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount,
+                                            "amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount
+                                        })
+                                    else:
+                                        for i in self.components:
+                                            if i.fees_category == education_settings.late_fee_category:
+                                                i.amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
+                                                i.gross_amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
+                                    if education_settings.readmission_fee_category not in fees_category_list:
+                                        self.append("components",{
+                                            "fees_category": education_settings.readmission_fee_category,
+                                            "gross_amount": education_settings.readmission_fee_amount,
+                                            "amount": education_settings.readmission_fee_amount
+                                        })
+                                    else:
+                                        for i in self.components:
+                                            if i.fees_category == education_settings.readmission_fee_category:
+                                                i.amount = education_settings.readmission_fee_amount
+                                                i.gross_amount = education_settings.readmission_fee_amount
+                            stu_fee.save()
+
 
     def append_discount(self):
         discount_doc = get_student_dicount(self.student)
@@ -147,7 +179,6 @@ class Fees(AccountsController):
             stu_months_array = []
             tran_months_array = []
 
-            print("Fee Check", trans_student.fee_category, trans_student.name)
             for comp in self.components:
                 fees_category_array.append(comp.fees_category)
 
@@ -160,21 +191,12 @@ class Fees(AccountsController):
             posting_month = frappe.utils.formatdate(self.posting_date, "MM")
             if frappe.utils.getdate(str(self.posting_date)) >= frappe.utils.getdate(str(fee_student.start_date)):
                 if posting_month in stu_months_array or posting_month not in tran_months_array:
-                    for comp in self.components:
-                        if comp.fees_category == trans_student.fee_category:
-                            self.components.remove(comp)
-                elif (posting_month in tran_months_array 
-                        and trans_student.dependant_fee_category in fees_category_array):
-                        if trans_student.fee_category not in fees_category_array:
-                            row = self.append('components', {})
-                            row.fees_category = trans_student.fee_category
-                            row.amount = trans_student.fee_amount
-                            row.gross_amount = trans_student.fee_amount
-                        else:
-                            for comp in self.components:
-                                if comp.fees_category == trans_student.fee_category:
-                                    comp.amount = trans_student.fee_amount
-                                    comp.gross_amount = trans_student.fee_amount
+                    self.delete()
+                elif (posting_month in tran_months_array):
+                        for comp in self.components:
+                            if comp.fees_category == trans_student.fee_category:
+                                comp.amount = trans_student.fee_amount
+                                comp.gross_amount = trans_student.fee_amount
                 
 
     def set_missing_accounts_and_fields(self):
@@ -214,8 +236,6 @@ class Fees(AccountsController):
                 tax_total += comp.amount
                 tax.tax_amount = tax_amount
                 tax.total = tax_total + tax.tax_amount
-                # print(comp.amount, comp.taxes_and_charges, "text")
-                # tax.tax_amount = comp.taxt
 
 
         for i, tax in enumerate(self.taxes):
@@ -224,7 +244,6 @@ class Fees(AccountsController):
                 tax.total = 0
                 rate = tax.rate / 100
                 for i, comp in enumerate(self.components):
-                    # print(comp.taxes_and_charges, "checking")
                     tax.tax_amount += comp.amount * rate
                     tax.total += comp.taxes_and_charges + comp.amount
 
@@ -723,73 +742,92 @@ def get_list_context(context=None):
 
 @frappe.whitelist()
 def set_late_fee_fine_and_readmission_scheduler():
+    current_date = frappe.utils.today()
     education_settings = frappe.get_doc("Education Settings")
-    st_fee_list = frappe.db.get_all("Fees", fields=['*'], filters=[
-        ['Fee Component', 'fees_category', '=', education_settings.late_fee_category],
-        ['Fees','docstatus', '=', 0]
-    ], order_by="posting_date ASC")
+    students = frappe.db.get_all("Student", filters={"enabled": 1})
+    for student in students:
+        st_fee_list = frappe.db.get_all("Fees", fields=['*'], filters=[
+            ['Fee Component', 'fees_category', '=', education_settings.dependent_late_fee_category],
+            ['Fees','docstatus', '=', 0],
+            ['student', '=', student.name]
+        ], order_by="posting_date ASC")
 
-    if len(st_fee_list) > 0:
-        for st_fee in st_fee_list:
-            stu_fee = frappe.get_doc("Fees", st_fee.name, fields=['*'])
-            due_date = str(stu_fee.due_date)
-            current_date = frappe.utils.today()
-            fees_category_list = []
 
-            if stu_fee.name == stu_fee.name:
-                if (education_settings.dependent_late_fee_category 
-                    and education_settings.readmission_threshold_days
-                    and education_settings.late_fee_category
-                    and education_settings.late_fee_amount
-                    and education_settings.readmission_fee_category
-                    and education_settings.readmission_fee_amount):
-                    if due_date < current_date:
-                        diff_days = frappe.utils.date_diff(current_date,due_date)
-                        for i in stu_fee.components:
-                            # if i.fees_category == "Late Fee Fine" or i.fees_category == "Re-Admission Fee":
-                            fees_category_list.append(i.fees_category)
+        is_late_fee_applied = False
+        if len(st_fee_list) > 0:
+            for fee in st_fee_list:
+                fees_category_list = []
+                due_date = str(fee.due_date)
+                vacation_list = frappe.db.get_all("Vacation", fields=['*'], filters=[
+                    ["year_start_date", "<=", fee.posting_date],
+                    ["year_end_date", ">", fee.posting_date],
+                ])
+                months = []  # Initialize an empty list for the output
+                # frappe
+                if len(vacation_list) > 0:
+                    vacation = frappe.get_doc("Vacation", vacation_list[0].name)
+                    for period in vacation.get("vacation_periods"):
+                        # start_month = frappe.utils.formatdate(period, "MM")
+                        months.extend(get_month_numbers_between_dates(period.vacation_start_date, period.vacation_end_date))
+                
+                posting_month = fee.posting_date.month
+                if posting_month not in months and not is_late_fee_applied:
+                    is_late_fee_applied = True
+                    fee_doc = frappe.get_doc("Fees", fee, fields=['*'])
 
-                        if education_settings.dependent_late_fee_category in fees_category_list:
-                            if diff_days <= education_settings.readmission_threshold_days and diff_days > 0:
-                                if education_settings.late_fee_category not in fees_category_list:
-                                    stu_fee.append("components",{
-                                        "fees_category": education_settings.late_fee_category,
-                                        "gross_amount": diff_days * education_settings.late_fee_amount,
-                                        "amount": diff_days * education_settings.late_fee_amount
-                                    })
-                                else:
-                                    for i in stu_fee.components:
-                                        if i.fees_category == education_settings.late_fee_category:
-                                            i.amount = diff_days * education_settings.late_fee_amount
-                                            i.gross_amount = diff_days * education_settings.late_fee_amount
-                                            
-                                if education_settings.readmission_fee_category in fees_category_list:
-                                    stu_fee.components = [i for i in stu_fee.components if i.fees_category != education_settings.readmission_fee_category]
-                            elif diff_days > education_settings.readmission_threshold_days:
-                                if education_settings.late_fee_category not in fees_category_list:
-                                    stu_fee.append("components",{
-                                        "fees_category": education_settings.late_fee_category,
-                                        "gross_amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount,
-                                        "amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                    })
-                                else:
-                                    for i in stu_fee.components:
-                                        if i.fees_category == education_settings.late_fee_category:
-                                            i.amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                            i.gross_amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                if education_settings.readmission_fee_category not in fees_category_list:
-                                    stu_fee.append("components",{
-                                        "fees_category": education_settings.readmission_fee_category,
-                                        "gross_amount": education_settings.readmission_fee_amount,
-                                        "amount": education_settings.readmission_fee_amount
-                                    })
-                                else:
-                                    for i in stu_fee.components:
-                                        if i.fees_category == education_settings.readmission_fee_category:
-                                            i.amount = education_settings.readmission_fee_amount
-                                            i.gross_amount = education_settings.readmission_fee_amount
-            
-            stu_fee.save()
+                    education_settings = frappe.get_doc("Education Settings")
+
+                    if (education_settings.dependent_late_fee_category 
+                        and education_settings.readmission_threshold_days
+                        and education_settings.late_fee_category
+                        and education_settings.late_fee_amount
+                        and education_settings.readmission_fee_category
+                        and education_settings.readmission_fee_amount):
+                        if due_date < current_date:
+                            diff_days = frappe.utils.date_diff(current_date,due_date)
+                            for i in fee_doc.components:
+                                fees_category_list.append(i.fees_category)
+
+                            if education_settings.dependent_late_fee_category in fees_category_list:
+                                if diff_days <= education_settings.readmission_threshold_days and diff_days > 0:
+                                    if education_settings.late_fee_category not in fees_category_list:
+                                        fee_doc.append("components",{
+                                            "fees_category": education_settings.late_fee_category,
+                                            "gross_amount": diff_days * education_settings.late_fee_amount,
+                                            "amount": diff_days * education_settings.late_fee_amount
+                                        })
+                                    else:
+                                        for i in fee_doc.components:
+                                            if i.fees_category == education_settings.late_fee_category:
+                                                i.amount = diff_days * education_settings.late_fee_amount
+                                                i.gross_amount = diff_days * education_settings.late_fee_amount
+                                                
+                                    if education_settings.readmission_fee_category in fees_category_list:
+                                        fee_doc.components = [i for i in fee_doc.components if i.fees_category != education_settings.readmission_fee_category]
+                                elif diff_days > education_settings.readmission_threshold_days:
+                                    if education_settings.late_fee_category not in fees_category_list:
+                                        fee_doc.append("components",{
+                                            "fees_category": education_settings.late_fee_category,
+                                            "gross_amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount,
+                                            "amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount
+                                        })
+                                    else:
+                                        for i in fee_doc.components:
+                                            if i.fees_category == education_settings.late_fee_category:
+                                                i.amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
+                                                i.gross_amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
+                                    if education_settings.readmission_fee_category not in fees_category_list:
+                                        fee_doc.append("components",{
+                                            "fees_category": education_settings.readmission_fee_category,
+                                            "gross_amount": education_settings.readmission_fee_amount,
+                                            "amount": education_settings.readmission_fee_amount
+                                        })
+                                    else:
+                                        for i in fee_doc.components:
+                                            if i.fees_category == education_settings.readmission_fee_category:
+                                                i.amount = education_settings.readmission_fee_amount
+                                                i.gross_amount = education_settings.readmission_fee_amount
+                            fee_doc.save()
 
 
 
@@ -907,6 +945,34 @@ def record_income(fees, current_docname):
         cancel=(current_doc.docstatus == 2),
         update_outstanding="No",
     )
+
+
+
+def get_month_numbers_between_dates(start_date, end_date):
+    # Initialize lists to store the month numbers
+    month_numbers = []
+
+    # Convert the start and end dates to datetime objects
+    # start_date = datetime.strptime(start_date, '%Y-%m-%d')
+    # end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+    start_date = start_date.replace(day=1)
+    end_date = end_date.replace(day=2)
+    # Initialize a variable to keep track of the current date
+    current_date = start_date
+
+    # Loop through the months between the start and end dates
+    while current_date <= end_date:
+        # Append the month number to the list
+        month_numbers.append(current_date.month)
+
+        # Move to the next month
+        if current_date.month == 12:
+            current_date = current_date.replace(year=current_date.year + 1, month=1)
+        else:
+            current_date = current_date.replace(month=current_date.month + 1)
+
+    return month_numbers
 
 
 @frappe.whitelist()

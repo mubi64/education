@@ -14,6 +14,7 @@
   "student_name",
   "fee_collections",
   "fee_schedule",
+  "transportation_fee_schedule",
   "include_payment",
   "send_payment_request",
   "column_break_4",
@@ -499,11 +500,18 @@
   {
    "fieldname": "section_break_9crzz",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "transportation_fee_schedule",
+   "fieldtype": "Link",
+   "label": "Transportation Fee Schedule",
+   "options": "Transportation Fee Schedule",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-02 14:34:41.224069",
+ "modified": "2023-10-04 21:21:49.380966",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",

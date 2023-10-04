@@ -500,6 +500,7 @@ def get_current_enrollment(student, academic_year=None):
 		(student, current_academic_year),
 		as_dict=1,
 	)
+	print(student, "name", "testing **************************")
 
 	if program_enrollment_list:
 		return program_enrollment_list[0]
@@ -530,23 +531,6 @@ def get_student_dicount(student):
 @frappe.whitelist()
 def get_advanced_student_fee(student = None, family_code = None):
 	outstanding_fees = get_outstanding_student_fee(student, family_code)
-	if len(outstanding_fees) > 0:
-		frappe.throw(_("There are some outstanding fees, please try to collect the outstanding fees first"))
-	else:
-		if family_code:
-			student = frappe.get_all("Student", filters={'family_code': family_code})
-			student_list = [item['name'] for item in student]
-		
-		student_fee = frappe.get_all("Fees", filters=[
-			["student", "in", student if family_code == None else student_list],
-			["outstanding_amount", "!=", 0],
-			["docstatus", "!=", 2],
-			["posting_date", ">", today()],
-		], fields=["*"])
-		return student_fee	
-
-@frappe.whitelist()
-def get_outstanding_student_fee(student = None, family_code = None):
 	if family_code:
 		student = frappe.get_all("Student", filters={'family_code': family_code})
 		student_list = [item['name'] for item in student]
@@ -555,8 +539,28 @@ def get_outstanding_student_fee(student = None, family_code = None):
 		["student", "in", student if family_code == None else student_list],
 		["outstanding_amount", "!=", 0],
 		["docstatus", "!=", 2],
+		["posting_date", ">", today()],
+	], fields=["*"])
+	if len(outstanding_fees) > 0 and len(student_fee) > 0:
+		frappe.throw(_("There are some outstanding fees, please try to collect the outstanding fees first"))
+	elif len(student_fee) == 0:
+		frappe.throw(_("There are no advance fee found in the system"))
+	return student_fee	
+
+@frappe.whitelist()
+def get_outstanding_student_fee(student = None, family_code = None):
+	if family_code:
+		student = frappe.get_all("Student", filters={'family_code': family_code})
+		student_list = [item['name'] for item in student]
+	
+	print(student, "checl")
+	student_fee = frappe.get_all("Fees", filters=[
+		["student", "in", student if family_code == None else student_list],
+		["outstanding_amount", "!=", 0],
+		["docstatus", "!=", 2],
 		["posting_date", "<=", today()],
 	], fields=["*"])
+	print(student_fee, "hello")
 	return student_fee
 
 @frappe.whitelist()

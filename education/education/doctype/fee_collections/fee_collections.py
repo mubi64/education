@@ -33,7 +33,7 @@ class FeeCollections(Document):
 					cr_fee.save()
 				elif self.discount_type != "":
 					frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
-			self.update_student_table()
+		self.update_student_table()
 				
 
 		
@@ -70,6 +70,7 @@ class FeeCollections(Document):
 			row.outstanding_amount = fee.outstanding_amount
 			row.allocated_amount = fee.outstanding_amount
 			row.month = formatdate(fee.posting_date, "MMMM-yyyy")
+			row.is_return = fee.is_return
 			
 			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
 			for fee_com in fee_child_com.components:
@@ -78,7 +79,7 @@ class FeeCollections(Document):
 				self.discount += dis_amount
 				self.net_total_a_d += fee_com.amount
 
-			self.grand_total += fee.outstanding_amount
+			self.grand_total += fee.grand_total
 			self.grand_total_b_tax += row.grand_total_before_tax
 			self.total_tax_a += row.total_taxes_and_charges
 			self.grand_total_b_d += row.amount_before_discount
@@ -111,18 +112,26 @@ class FeeCollections(Document):
 					current_fee.fee_collections = self.name
 					current_fee.save()
 					current_fee.submit()
-				name = item.student_id
-				if name not in temp_dict:
-					temp_dict[name] = {"name": name, "amount": 0, "fee": ""}
+
+				temp_dict = {
+					"name": item.student_id,
+					"amount": item.outstanding_amount,
+					"fee": item.fees
+				}
+			# 	name = item.student_id
+			# 	if name not in temp_dict:
+			# 		temp_dict[name] = {"name": name, "amount": 0, "fee": ""}
 				
-				temp_dict[name]["amount"] += item.outstanding_amount
-				if item.student_id == temp_dict[name]["name"]: 
-					temp_dict[name]["fee"] = item.fees
+			# 	temp_dict[name]["amount"] += item.outstanding_amount
+			# 	if item.student_id == temp_dict[name]["name"]: 
+			# 		temp_dict[name]["fee"] = item.fees
 
-			student_fees = list(temp_dict.values())
+			# student_fees = list(temp_dict.values())
 
-			for fee in student_fees:
-				values = self.get_payment_entry("Fees", fee["fee"], fee, party_type="Student", payment_type="Receive")
+			# for fee in student_fees:
+				values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
+				values.reference_no = self.reference_no
+				values.reference_date = self.reference_date
 				values.insert()
 				values.submit()
 			
@@ -267,7 +276,7 @@ class FeeCollections(Document):
 						# 	"reference_name": student_fee.fees,
 						# 	"allocated_amount": student_fee.outstanding_amount,
 						# })
-						if fee["name"] == student_fee.student_id:
+						if fee["fee"] == student_fee.fees:
 							pe.append(
 								"references",
 								{

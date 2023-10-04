@@ -27,15 +27,26 @@ class Student(Document):
 
 	def on_update(self):
 		if self.transportation_fee_structure:
-			st_fee_list = frappe.db.get_all("Fees", fields=['name', 'is_paid'], filters={
-				"student": self.name,
-				"posting_date": [">=", self.start_date]
-			})
+			transport_stu = frappe.get_doc("Transportation Fee Structure", self.transportation_fee_structure, fields=['*'])
+			st_fee_list = frappe.db.get_all("Fees", fields=['name', 'is_paid'], filters=[
+				["student", "=", self.name],
+				["posting_date", ">=", self.start_date],
+				["docstatus", "=", 0],
+				["Fee Component", "fees_category", "=", transport_stu.fee_category]
+			])
+			st_fee_list_old = frappe.db.get_all("Fees", fields=['name', 'is_paid'], filters=[
+				["student", "=", self.name],
+				["posting_date", "<", self.start_date],
+				["docstatus", "=", 0],
+				["Fee Component", "fees_category", "=", transport_stu.fee_category]
+			])
+			# for fee in st_fee_list_old:
+			# 	fee.delete()
 			for fee in st_fee_list:
-				st_fee = frappe.get_doc("Fees", fee.name)
-				st_fee.validate()
-				st_fee.save()
-				frappe.reload_doc("Education", "Fees", st_fee.name)
+				append_transportation(self, fee.name)
+				# st_fee.validate()
+				# st_fee.save()
+				# frappe.reload_doc("Education", "Fees", st_fee.name)
 
 	def validate_dates(self):
 		for sibling in self.siblings:
@@ -226,6 +237,36 @@ class Student(Document):
 			return frappe.get_doc("Course Enrollment", enrollment_name)
 		else:
 			return enrollment
+		
+def append_transportation(doc, fee_name):
+	if doc.transportation_fee_structure:
+		fee_doc = frappe.get_doc("Fees", fee_name, fields=['*'])
+		trans_student = frappe.get_doc(
+			'Transportation Fee Structure', doc.transportation_fee_structure, fields=['*'])
+		fees_category_array = []
+		stu_months_array = []
+		tran_months_array = []
+
+		for comp in fee_doc.components:
+			fees_category_array.append(comp.fees_category)
+
+		for m in doc.transportation_fee_structure_months:
+			stu_months_array.append(m.month_number)
+
+		for m in trans_student.transportation_fee_structure_months:
+			tran_months_array.append(m.month_number)
+			
+		posting_month = frappe.utils.formatdate(fee_doc.posting_date, "MM")
+		if frappe.utils.getdate(str(fee_doc.posting_date)) >= frappe.utils.getdate(str(doc.start_date)):
+			if posting_month in stu_months_array or posting_month not in tran_months_array:
+				fee_doc.delete()
+			elif (posting_month in tran_months_array):
+				for comp in fee_doc.components:
+					if comp.fees_category == trans_student.fee_category:
+						comp.amount = trans_student.fee_amount
+						comp.gross_amount = trans_student.fee_amount
+
+				fee_doc.save()
 
 
 def get_timeline_data(doctype, name):
@@ -241,3 +282,4 @@ def get_timeline_data(doctype, name):
 			name,
 		)
 	)
+

@@ -9,19 +9,72 @@ frappe.ui.form.on("Fee Collections", {
       .css({ "background-color": "#ffc101" });
     frm
       .get_field("get_advance_fees")
-      .$input.addClass("btn-success")
-      .css({ "background-color": "#28a745", color: "white" });
+      .$input.addClass("btn-primary")
+      .css({ "background-color": "#2490ef", color: "white" });
     if (frm.doc.docstatus == 1 && frm.doc.is_return == 0) {
-      var doc = await frappe.call("education.education.api.get_refund_link", {
-        name: frm.doc.name,
+      // var doc = await frappe.call("education.education.api.get_refund_link", {
+      //   name: frm.doc.name,
+      // });
+      // if (doc.message) {
+      frm.add_custom_button(__("Make Refund"), async function () {
+        const array = [];
+        frm.doc.refund_against = frm.doc.name;
+        // frm.set_value("student_fee_details", ""); // Clear existing details
+
+        // Define a function to make an asynchronous call and return a Promise
+        function getFeeDetails(e) {
+          return new Promise((resolve, reject) => {
+            frappe.call({
+              method: "frappe.client.get",
+              args: {
+                doctype: "Fees",
+                name: e.fees,
+              },
+              callback(r) {
+                if (r.message && r.message.is_return === 0) {
+                  const fee = r.message;
+                  const row = {
+                    fees: fee.name,
+                    student_id: fee.student,
+                    student_name: fee.student_name,
+                    discount_type: fee.discount_type,
+                    discount_amount: fee.discount_amount,
+                    percentage: fee.percentage,
+                    amount_before_discount: fee.amount_before_discount,
+                    due_date: fee.due_date,
+                    grand_total_before_tax: fee.grand_total_before_tax,
+                    total_amount: fee.grand_total,
+                    total_taxes_and_charges: fee.total_taxes_and_charges,
+                    outstanding_amount: e.outstanding_amount,
+                    allocated_amount: e.outstanding_amount,
+                    month: fee.posting_date,
+                  };
+                  array.push(row);
+                }
+                resolve(); // Resolve the Promise when the callback is done
+              },
+            });
+          });
+        }
+
+        // Use Promise.all to wait for all asynchronous calls to finish
+        const promises = [];
+        frm.doc.is_return = 1;
+        frm.copy_doc();
+
+        for (let i = 0; i < frm.doc.student_fee_details.length; i++) {
+          promises.push(getFeeDetails(frm.doc.student_fee_details[i]));
+        }
+
+        // Wait for all promises to complete
+        await Promise.all(promises);
+
+        frm.set_value("student_fee_details", array);
+
+        if (frm.doc.student_fee_details.length === 0) {
+          frappe.throw(__("All Fees have already been refunded"));
+        }
       });
-      if (doc.message) {
-        frm.add_custom_button(__("Make Refund"), async function () {
-          frm.doc.is_return = 1;
-          frm.doc.refund_against = frm.doc.name;
-          frm.copy_doc();
-        });
-      }
     }
   },
 
@@ -66,11 +119,13 @@ frappe.ui.form.on("Fee Collections", {
             row.outstanding_amount = fee.outstanding_amount;
             row.allocated_amount = fee.outstanding_amount;
             row.month = fee.posting_date;
+            row.is_return = fee.is_return;
           }
         }
         refresh_field("student_fee_details");
       },
     });
+    frm.trigger("student_fee_details");
   },
 
   get_advance_fees: function (frm) {
@@ -108,5 +163,28 @@ frappe.ui.form.on("Fee Collections", {
         refresh_field("student_fee_details");
       },
     });
+    frm.trigger("student_fee_details");
+  },
+
+  student_fee_details: function (frm) {
+    console.log("cge");
+    if (frm.doc.student_fee_details) {
+      console.log("in looop");
+      let grand_total = 0;
+      let grand_total_b_tax = 0;
+      let total_tax_a = 0;
+      let grand_total_b_d = 0;
+      for (let i = 0; i < frm.doc.student_fee_details.length; i++) {
+        const e = frm.doc.student_fee_details[i];
+        grand_total += e.grand_total;
+        grand_total_b_tax += e.grand_total_before_tax;
+        total_tax_a += e.total_taxes_and_charges;
+        grand_total_b_d += e.amount_before_discount;
+      }
+      frm.set_value("grand_total", grand_total);
+      frm.set_value("grand_total_b_tax", grand_total_b_tax);
+      frm.set_value("total_tax_a", total_tax_a);
+      frm.set_value("grand_total_b_d", grand_total_b_d);
+    }
   },
 });
