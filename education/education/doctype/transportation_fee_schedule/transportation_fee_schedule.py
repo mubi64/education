@@ -133,7 +133,7 @@ class TransportationFeeSchedule(Document):
 								#             comp.amount = trans_student.fee_amount
 								#             comp.gross_amount = trans_st
 								created_records += 1
-								frappe.publish_progress(created_records, title="Progress")
+								frappe.show_progress("Progress", created_records, self.total_student, 'Please Wait')
 					except Exception as e:
 						error = True
 						err_msg = (

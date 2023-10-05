@@ -26,7 +26,8 @@
   "column_break_feess",
   "readmission_fee_category",
   "readmission_threshold_days",
-  "readmission_fee_amount"
+  "readmission_fee_amount",
+  "student_count"
  ],
  "fields": [
   {
@@ -156,11 +157,18 @@
    "fieldtype": "Float",
    "label": "Re-Admission Fee Amount",
    "mandatory_depends_on": "eval:doc.readmission_fee_category != null"
+  },
+  {
+   "default": "100",
+   "description": "Student Count to Proceed in one go",
+   "fieldname": "student_count",
+   "fieldtype": "Int",
+   "label": "Student Count"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-09-29 14:10:34.670476",
+ "modified": "2023-10-05 19:34:43.517539",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Education Settings",

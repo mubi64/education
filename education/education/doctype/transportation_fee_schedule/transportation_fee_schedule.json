@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2023-10-04 10:18:02.044850",
  "default_view": "List",
  "doctype": "DocType",
@@ -22,7 +23,8 @@
   "company",
   "error_log_section",
   "error_log",
-  "amended_from"
+  "amended_from",
+  "naming_series"
  ],
  "fields": [
   {
@@ -119,15 +121,23 @@
    "options": "\nIn Process\nFailed\nSuccessful",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "EDU-TFSH-.YYYY.-"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-04 20:49:04.063322",
+ "modified": "2023-10-04 22:08:36.776045",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Transportation Fee Schedule",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

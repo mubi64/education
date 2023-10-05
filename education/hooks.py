@@ -219,8 +219,13 @@ scheduler_events = {
 # 	"all": [
 # 		"education.tasks.all"
 # 	],
+	"cron": {
+        "*/30 * * * * *": [
+        	"education.education.doctype.fees.fees.set_late_fee_fine_and_readmission_scheduler"
+		],
+	},
 	"daily": [
-		"education.education.doctype.fees.fees.set_late_fee_fine_and_readmission_scheduler"
+		"education.education.doctype.fees.fees.insert_late_fee_students_scheduler"
 	],
 # 	"hourly": [
 # 		"education.tasks.hourly"
