@@ -15,7 +15,13 @@
   "family_code",
   "section_break_cfg8p",
   "get_outstanding_fees",
+  "column_break_shoih",
   "get_advance_fees",
+  "column_break_cnvie",
+  "get_all_fees",
+  "column_break_rdznd",
+  "column_break_6e1ku",
+  "section_break_vwwam",
   "student_fee_details",
   "section_break_d4ocs",
   "mode_of_payment",
@@ -276,12 +282,38 @@
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "CV-S-.#####\nCV-R-.#####"
+  },
+  {
+   "depends_on": "eval:doc.docstatus == 0 && doc.is_return == 0",
+   "fieldname": "get_all_fees",
+   "fieldtype": "Button",
+   "label": "Get All Fees"
+  },
+  {
+   "fieldname": "column_break_cnvie",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_vwwam",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_shoih",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_rdznd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_6e1ku",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-03 15:14:44.575923",
+ "modified": "2023-10-09 09:54:14.082341",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

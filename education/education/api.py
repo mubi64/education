@@ -553,14 +553,13 @@ def get_outstanding_student_fee(student = None, family_code = None):
 		student = frappe.get_all("Student", filters={'family_code': family_code})
 		student_list = [item['name'] for item in student]
 	
-	print(student, "checl")
 	student_fee = frappe.get_all("Fees", filters=[
 		["student", "in", student if family_code == None else student_list],
 		["outstanding_amount", "!=", 0],
 		["docstatus", "!=", 2],
 		["posting_date", "<=", today()],
 	], fields=["*"])
-	print(student_fee, "hello")
+	
 	return student_fee
 
 @frappe.whitelist()
@@ -572,8 +571,12 @@ def get_student_fee_details(student = None, family_code = None):
 	student_fee = frappe.get_all("Fees", filters=[
 		["student", "in", student if family_code == None else student_list],
 		["outstanding_amount", "!=", 0],
+		["is_return", "=", 0],
 		["docstatus", "!=", 2],
 	], fields=["*"])
+	if len(student_fee) == 0:
+		frappe.throw(_("There are no fee found in the system"))
+		
 	return student_fee
 
 @frappe.whitelist()
@@ -588,6 +591,12 @@ def get_student_fee_details_not_submit(student = None, family_code = None):
 		["docstatus", "=", 0],
 	], fields=["*"])
 	return student_fee
+
+@frappe.whitelist()
+def get_fee_doc(name):
+	fee_doc = frappe.get_doc("Fees", name)
+
+	return fee_doc
 
 @frappe.whitelist()
 def get_refund_link(name):

@@ -71,14 +71,15 @@ class FeeCollections(Document):
 			row.allocated_amount = fee.outstanding_amount
 			row.month = formatdate(fee.posting_date, "MMMM-yyyy")
 			row.is_return = fee.is_return
-			
+			compoArray = []
 			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
 			for fee_com in fee_child_com.components:
+				compoArray.append(fee_com.fees_category)
 				dis_amount = fee_com.gross_amount - fee_com.amount
 				self.net_total += fee_com.gross_amount
 				self.discount += dis_amount
 				self.net_total_a_d += fee_com.amount
-
+			row.components = ", ".join(compoArray)
 			self.grand_total += fee.grand_total
 			self.grand_total_b_tax += row.grand_total_before_tax
 			self.total_tax_a += row.total_taxes_and_charges
@@ -312,6 +313,5 @@ class FeeCollections(Document):
 			pe.set_difference_amount()
 
 		return pe
-
 
 

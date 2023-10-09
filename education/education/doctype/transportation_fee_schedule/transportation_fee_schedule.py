@@ -160,11 +160,11 @@ class TransportationFeeSchedule(Document):
 
 	@frappe.whitelist()
 	def get_transportation_student_count(self):
-		students = frappe.db.count("Student", filters=[
-			["transportation_fee_structure", "Is", "Set"]
+		students = frappe.db.get_all("Student", filters=[
+			["transportation_fee_structure", "is", "set"]
 		])
 
-		return students
+		return len(students)
 	
 	# def append_transportation(self):
     #     fee_student = frappe.get_doc('Student', self.student)
