@@ -6,15 +6,13 @@ import frappe
 from erpnext.accounts.doctype.payment_request.payment_request import make_payment_request
 from erpnext.accounts.general_ledger import make_reverse_gl_entries
 from erpnext.controllers.accounts_controller import AccountsController
+from frappe.website.website_generator import WebsiteGenerator
 from frappe import _
-from frappe.model.mapper import get_mapped_doc
 from frappe.utils import money_in_words, add_months, add_days, flt
 from frappe.utils.csvutils import getlink
-from frappe.query_builder import DocType
-from datetime import datetime, timedelta
 
 
-class Fees(AccountsController):
+class Fees(AccountsController, WebsiteGenerator):
     def set_indicator(self):
         """Set indicator for portal"""
         if self.is_return == 1:
@@ -28,6 +26,8 @@ class Fees(AccountsController):
             self.indicator_title = _("Paid")
 
     def validate(self):
+        if not self.route:
+            self.route = "fees/" + self.name
         fees_category_array = []
         one_month_earlier = add_months(self.posting_date, -1)
         # Subtract one day
@@ -49,6 +49,7 @@ class Fees(AccountsController):
         else:
             for i, comp in enumerate(self.components):
                 comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
+        
             # self.set_late_fee_fine_and_readmission()
 
             #transportation
@@ -66,91 +67,92 @@ class Fees(AccountsController):
             self.append_discount()
             self.set_missing_accounts_and_fields()
             self.calculate_total()
+            print(self.total_discount_amount, "checning")
 
-    def set_late_fee_fine_and_readmission(self):
-        due_date = str(self.due_date)
-        current_date = frappe.utils.today()
-        fees_category_list = []
+    # def set_late_fee_fine_and_readmission(self):
+    #     due_date = str(self.due_date)
+    #     current_date = frappe.utils.today()
+    #     fees_category_list = []
 
-        vacation_list = frappe.db.get_all("Vacation", fields=['*'], filters=[
-            ["year_start_date", "<=", self.posting_date],
-            ["year_end_date", ">", self.posting_date],
-        ])
-        months = []  # Initialize an empty list for the output
-        # frappe
-        if len(vacation_list) > 0:
-            vacation = frappe.get_doc("Vacation", vacation_list[0].name)
-            for period in vacation.get("vacation_periods"):
-                # start_month = frappe.utils.formatdate(period, "MM")
-                months.extend(get_month_numbers_between_dates(period.vacation_start_date, period.vacation_end_date))
+    #     vacation_list = frappe.db.get_all("Vacation", fields=['*'], filters=[
+    #         ["year_start_date", "<=", self.posting_date],
+    #         ["year_end_date", ">", self.posting_date],
+    #     ])
+    #     months = []  # Initialize an empty list for the output
+    #     # frappe
+    #     if len(vacation_list) > 0:
+    #         vacation = frappe.get_doc("Vacation", vacation_list[0].name)
+    #         for period in vacation.get("vacation_periods"):
+    #             # start_month = frappe.utils.formatdate(period, "MM")
+    #             months.extend(get_month_numbers_between_dates(period.vacation_start_date, period.vacation_end_date))
 
         
-        st_fee_list = frappe.db.get_all("Fees", fields=['*'], filters={
-            "student": self.student,
-            "docstatus": 0
-        }, order_by="posting_date ASC")
-        is_late_fee_applied = False
-        if len(st_fee_list) > 0:
-            for fee in st_fee_list:
-                posting_month = fee.posting_date.month
-                if posting_month not in months and not is_late_fee_applied:
-                    is_late_fee_applied = True
-                    stu_fee = frappe.get_doc("Fees", fee, fields=['*'])
+    #     st_fee_list = frappe.db.get_all("Fees", fields=['*'], filters={
+    #         "student": self.student,
+    #         "docstatus": 0
+    #     }, order_by="posting_date ASC")
+    #     is_late_fee_applied = False
+    #     if len(st_fee_list) > 0:
+    #         for fee in st_fee_list:
+    #             posting_month = fee.posting_date.month
+    #             if posting_month not in months and not is_late_fee_applied:
+    #                 is_late_fee_applied = True
+    #                 stu_fee = frappe.get_doc("Fees", fee, fields=['*'])
 
-                    education_settings = frappe.get_doc("Education Settings")
+    #                 education_settings = frappe.get_doc("Education Settings")
 
-                    if (education_settings.dependent_late_fee_category 
-                        and education_settings.readmission_threshold_days
-                        and education_settings.late_fee_category
-                        and education_settings.late_fee_amount
-                        and education_settings.readmission_fee_category
-                        and education_settings.readmission_fee_amount):
-                        if due_date < current_date:
-                            diff_days = frappe.utils.date_diff(current_date,due_date)
-                            for i in self.components:
-                                # if i.fees_category == "Late Fee Fine" or i.fees_category == "Re-Admission Fee":
-                                fees_category_list.append(i.fees_category)
+    #                 if (education_settings.dependent_late_fee_category 
+    #                     and education_settings.readmission_threshold_days
+    #                     and education_settings.late_fee_category
+    #                     and education_settings.late_fee_amount
+    #                     and education_settings.readmission_fee_category
+    #                     and education_settings.readmission_fee_amount):
+    #                     if due_date < current_date:
+    #                         diff_days = frappe.utils.date_diff(current_date,due_date)
+    #                         for i in self.components:
+    #                             # if i.fees_category == "Late Fee Fine" or i.fees_category == "Re-Admission Fee":
+    #                             fees_category_list.append(i.fees_category)
 
-                            if education_settings.dependent_late_fee_category in fees_category_list:
-                                if diff_days <= education_settings.readmission_threshold_days and diff_days > 0:
-                                    if education_settings.late_fee_category not in fees_category_list:
-                                        self.append("components",{
-                                            "fees_category": education_settings.late_fee_category,
-                                            "gross_amount": diff_days * education_settings.late_fee_amount,
-                                            "amount": diff_days * education_settings.late_fee_amount
-                                        })
-                                    else:
-                                        for i in self.components:
-                                            if i.fees_category == education_settings.late_fee_category:
-                                                i.amount = diff_days * education_settings.late_fee_amount
-                                                i.gross_amount = diff_days * education_settings.late_fee_amount
+    #                         if education_settings.dependent_late_fee_category in fees_category_list:
+    #                             if diff_days <= education_settings.readmission_threshold_days and diff_days > 0:
+    #                                 if education_settings.late_fee_category not in fees_category_list:
+    #                                     self.append("components",{
+    #                                         "fees_category": education_settings.late_fee_category,
+    #                                         "gross_amount": diff_days * education_settings.late_fee_amount,
+    #                                         "amount": diff_days * education_settings.late_fee_amount
+    #                                     })
+    #                                 else:
+    #                                     for i in self.components:
+    #                                         if i.fees_category == education_settings.late_fee_category:
+    #                                             i.amount = diff_days * education_settings.late_fee_amount
+    #                                             i.gross_amount = diff_days * education_settings.late_fee_amount
                                                 
-                                    if education_settings.readmission_fee_category in fees_category_list:
-                                        self.components = [i for i in self.components if i.fees_category != education_settings.readmission_fee_category]
-                                elif diff_days > education_settings.readmission_threshold_days:
-                                    if education_settings.late_fee_category not in fees_category_list:
-                                        self.append("components",{
-                                            "fees_category": education_settings.late_fee_category,
-                                            "gross_amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount,
-                                            "amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                        })
-                                    else:
-                                        for i in self.components:
-                                            if i.fees_category == education_settings.late_fee_category:
-                                                i.amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                                i.gross_amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
-                                    if education_settings.readmission_fee_category not in fees_category_list:
-                                        self.append("components",{
-                                            "fees_category": education_settings.readmission_fee_category,
-                                            "gross_amount": education_settings.readmission_fee_amount,
-                                            "amount": education_settings.readmission_fee_amount
-                                        })
-                                    else:
-                                        for i in self.components:
-                                            if i.fees_category == education_settings.readmission_fee_category:
-                                                i.amount = education_settings.readmission_fee_amount
-                                                i.gross_amount = education_settings.readmission_fee_amount
-                            stu_fee.save()
+    #                                 if education_settings.readmission_fee_category in fees_category_list:
+    #                                     self.components = [i for i in self.components if i.fees_category != education_settings.readmission_fee_category]
+    #                             elif diff_days > education_settings.readmission_threshold_days:
+    #                                 if education_settings.late_fee_category not in fees_category_list:
+    #                                     self.append("components",{
+    #                                         "fees_category": education_settings.late_fee_category,
+    #                                         "gross_amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount,
+    #                                         "amount": education_settings.readmission_threshold_days * education_settings.late_fee_amount
+    #                                     })
+    #                                 else:
+    #                                     for i in self.components:
+    #                                         if i.fees_category == education_settings.late_fee_category:
+    #                                             i.amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
+    #                                             i.gross_amount = education_settings.readmission_threshold_days * education_settings.late_fee_amount
+    #                                 if education_settings.readmission_fee_category not in fees_category_list:
+    #                                     self.append("components",{
+    #                                         "fees_category": education_settings.readmission_fee_category,
+    #                                         "gross_amount": education_settings.readmission_fee_amount,
+    #                                         "amount": education_settings.readmission_fee_amount
+    #                                     })
+    #                                 else:
+    #                                     for i in self.components:
+    #                                         if i.fees_category == education_settings.readmission_fee_category:
+    #                                             i.amount = education_settings.readmission_fee_amount
+    #                                             i.gross_amount = education_settings.readmission_fee_amount
+    #                         stu_fee.save()
 
 
     def append_discount(self):
@@ -255,7 +257,6 @@ class Fees(AccountsController):
         for i, tax in enumerate(self.taxes):
             taxes_amount += tax.tax_amount
         self.amount_before_discount = self.grand_total
-        self.total_discount_amount = flt(self.amount_before_discount) - flt(self.grand_total_before_tax)
         if self.discount_type == "Amount":
             self.grand_total = flt(self.grand_total) - flt(self.discount_amount)
         
@@ -274,6 +275,7 @@ class Fees(AccountsController):
                 taxes_amount += amount
 
 
+        self.total_discount_amount = flt(self.amount_before_discount) - flt(self.grand_total_before_tax)
         self.total_taxes_and_charges = taxes_amount
         self.total_taxes_and_charges_company_currency = taxes_amount
         self.grand_total += taxes_amount
@@ -336,7 +338,7 @@ class Fees(AccountsController):
         income_account = self.income_account
         total_discount_amount = self.total_discount_amount
         amount_before_discount = self.amount_before_discount
-        tax_gl_amount = sum(tax.tax_amount for tax in self.taxes) if self.taxes else 0
+        # tax_gl_amount = sum(tax.tax_amount for tax in self.taxes) if self.taxes else 0
         
         if not self.record_income_in_temp_account:
             if self.taxes:
@@ -431,17 +433,17 @@ class Fees(AccountsController):
         else:
             if not self.components:
                 return
-            if self.taxes:
-                # for i, tax in enumerate(self.taxes):
-                #     tax_gl_amount += tax.tax_amount
+            # if self.taxes:
+            for i, tax in enumerate(self.taxes):
+                # tax_gl_amount += tax.tax_amount
                 gl_entries.append(self.get_gl_dict(
                     {
-                        "account": temporary_income_account,
+                        "account": tax.account_head,
                         "party_type": "Student",
                         "party": self.student,
                         "against": self.student,
-                        "credit": tax_gl_amount,
-                        "credit_in_account_currency": tax_gl_amount,
+                        "credit": tax.tax_amount,
+                        "credit_in_account_currency": tax.tax_amount,
                         "cost_center": self.cost_center,
                     },
                     item=self,
@@ -451,8 +453,8 @@ class Fees(AccountsController):
                         "account": receivable_account,
                         "party_type": "Student",
                         "party": self.student,
-                        "debit": tax_gl_amount,
-                        "debit_in_account_currency": tax_gl_amount,
+                        "debit": tax.tax_amount,
+                        "debit_in_account_currency": tax.tax_amount,
                         "against_voucher": self.name,
                         "against_voucher_type": self.doctype,
                     },
@@ -522,210 +524,212 @@ class Fees(AccountsController):
             merge_entries=False,
         )
 
-    def make_return_gl_entries(self):
-        if not self.grand_total:
-            return
+    # def make_return_gl_entries(self):
+    #     if not self.grand_total:
+    #         return
             
-        recorded_gl_entries = []
-        gl_entries = []
-        temporary_income_account = self.temporary_income_account
-        receivable_account = self.receivable_account
-        income_account = self.income_account
-        total_discount_amount = self.total_discount_amount
-        amount_before_discount = self.amount_before_discount
-        tax_gl_amount = sum(tax.tax_amount for tax in self.taxes) if self.taxes else 0
+    #     recorded_gl_entries = []
+    #     gl_entries = []
+    #     temporary_income_account = self.temporary_income_account
+    #     receivable_account = self.receivable_account
+    #     income_account = self.income_account
+    #     total_discount_amount = self.total_discount_amount
+    #     amount_before_discount = self.amount_before_discount
+    #     tax_gl_amount = sum(tax.tax_amount for tax in self.taxes) if self.taxes else 0
         
-        if not self.record_income_in_temp_account:
-            if self.taxes:
-                for i, tax in enumerate(self.taxes):
-                    recorded_gl_entries.append(self.get_gl_dict(
-                        {
-                            "account": tax.account_head,
-                            "against": self.student,
-                            "debit": tax.tax_amount,
-                            "debit_in_account_currency": tax.tax_amount,
-                            "cost_center": self.cost_center,
-                        },
-                        item=self,
-                    ))
-                    recorded_gl_entries.append(self.get_gl_dict(
-                        {
-                            "account": receivable_account,
-                            "party_type": "Student",
-                            "party": self.student,
-                            "against": income_account, # tax.account_head,
-                            "credit": tax.tax_amount,
-                            "credit_in_account_currency": tax.tax_amount,
-                            "against_voucher": self.name,
-                            "against_voucher_type": self.doctype,
-                        },
-                        item=self,
-                    ))
+    #     if not self.record_income_in_temp_account:
+    #         if self.taxes:
+    #             for i, tax in enumerate(self.taxes):
+    #                 recorded_gl_entries.append(self.get_gl_dict(
+    #                     {
+    #                         "account": tax.account_head,
+    #                         "against": self.student,
+    #                         "debit": tax.tax_amount,
+    #                         "debit_in_account_currency": tax.tax_amount,
+    #                         "cost_center": self.cost_center,
+    #                     },
+    #                     item=self,
+    #                 ))
+    #                 recorded_gl_entries.append(self.get_gl_dict(
+    #                     {
+    #                         "account": receivable_account,
+    #                         "party_type": "Student",
+    #                         "party": self.student,
+    #                         "against": income_account, # tax.account_head,
+    #                         "credit": tax.tax_amount,
+    #                         "credit_in_account_currency": tax.tax_amount,
+    #                         "against_voucher": self.name,
+    #                         "against_voucher_type": self.doctype,
+    #                     },
+    #                     item=self,
+    #                 ))
 
-            for i, fee in enumerate(self.components):
-                recorded_gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": receivable_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "against": income_account,
-                        "credit": fee.amount,
-                        "credit_in_account_currency": fee.amount,
-                        "against_voucher": self.name,
-                        "against_voucher_type": self.doctype,
-                    },
-                    item=self,
-                ))
-            if self.discount_type != "":
-                recorded_gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": receivable_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "against":  income_account, # self.student,
-                        "debit": total_discount_amount,
-                        "debit_in_account_currency": total_discount_amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                ))
+    #         for i, fee in enumerate(self.components):
+    #             recorded_gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": receivable_account,
+    #                     "party_type": "Student",
+    #                     "party": self.student,
+    #                     "against": income_account,
+    #                     "credit": fee.amount,
+    #                     "credit_in_account_currency": fee.amount,
+    #                     "against_voucher": self.name,
+    #                     "against_voucher_type": self.doctype,
+    #                 },
+    #                 item=self,
+    #             ))
+    #         if self.discount_type != "":
+    #             recorded_gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": receivable_account,
+    #                     "party_type": "Student",
+    #                     "party": self.student,
+    #                     "against":  income_account, # self.student,
+    #                     "debit": total_discount_amount,
+    #                     "debit_in_account_currency": total_discount_amount,
+    #                     "cost_center": self.cost_center,
+    #                 },
+    #                 item=self,
+    #             ))
 
-                recorded_gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": self.fee_expense_account,
-                        # "party_type": "Student",
-                        # "party": self.student,
-                        "against": self.student,
-                        "credit": total_discount_amount,
-                        "credit_in_account_currency": total_discount_amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                ))
-            for i, fee in enumerate(self.components):
-                fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
-                recorded_gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": fee_doc.income_account,
-                        "against": self.student,
-                        "debit": fee.amount,
-                        "debit_in_account_currency": fee.amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                ))
-        else:
-            if not self.components:
-                return
-            if self.taxes:
-                # for i, tax in enumerate(self.taxes):
-                #     tax_gl_amount += tax.tax_amount
-                gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": temporary_income_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "against": self.student,
-                        "debit": tax_gl_amount,
-                        "debit_in_account_currency": tax_gl_amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                ))
-                gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": receivable_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "credit": tax_gl_amount,
-                        "credit_in_account_currency": tax_gl_amount,
-                        "against_voucher": self.name,
-                        "against_voucher_type": self.doctype,
-                    },
-                    item=self,
-                ))
-            for i, fee in enumerate(self.components):
-                fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
-                gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": fee_doc.receivable_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "against": fee_doc.income_account,
-                        "credit": fee.amount,
-                        "credit_in_account_currency": fee.amount,
-                        "against_voucher": self.name,
-                        "against_voucher_type": self.doctype,
-                    },
-                    item=self,
-                ))
+    #             recorded_gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": self.fee_expense_account,
+    #                     # "party_type": "Student",
+    #                     # "party": self.student,
+    #                     "against": self.student,
+    #                     "credit": total_discount_amount,
+    #                     "credit_in_account_currency": total_discount_amount,
+    #                     "cost_center": self.cost_center,
+    #                 },
+    #                 item=self,
+    #             ))
+    #         for i, fee in enumerate(self.components):
+    #             fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
+    #             recorded_gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": fee_doc.income_account,
+    #                     "against": self.student,
+    #                     "debit": fee.amount,
+    #                     "debit_in_account_currency": fee.amount,
+    #                     "cost_center": self.cost_center,
+    #                 },
+    #                 item=self,
+    #             ))
+    #     else:
+    #         if not self.components:
+    #             return
+    #         if self.taxes:
+    #             # for i, tax in enumerate(self.taxes):
+    #             #     tax_gl_amount += tax.tax_amount
+    #             gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": temporary_income_account,
+    #                     "party_type": "Student",
+    #                     "party": self.student,
+    #                     "against": self.student,
+    #                     "debit": tax_gl_amount,
+    #                     "debit_in_account_currency": tax_gl_amount,
+    #                     "cost_center": self.cost_center,
+    #                 },
+    #                 item=self,
+    #             ))
+    #             gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": receivable_account,
+    #                     "party_type": "Student",
+    #                     "party": self.student,
+    #                     "credit": tax_gl_amount,
+    #                     "credit_in_account_currency": tax_gl_amount,
+    #                     "against_voucher": self.name,
+    #                     "against_voucher_type": self.doctype,
+    #                 },
+    #                 item=self,
+    #             ))
+    #         for i, fee in enumerate(self.components):
+    #             fee_doc = frappe.get_doc('Fee Category', fee.fees_category)
+    #             gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": fee_doc.receivable_account,
+    #                     "party_type": "Student",
+    #                     "party": self.student,
+    #                     "against": fee_doc.income_account,
+    #                     "credit": fee.amount,
+    #                     "credit_in_account_currency": fee.amount,
+    #                     "against_voucher": self.name,
+    #                     "against_voucher_type": self.doctype,
+    #                 },
+    #                 item=self,
+    #             ))
                 
-            gl_entries.append(self.get_gl_dict(
-                {
-                    "account": temporary_income_account,
-                    "party_type": "Student",
-                    "party": self.student,
-                    "against": self.student,
-                    "debit": amount_before_discount,
-                    "debit_in_account_currency": amount_before_discount,
-                    "cost_center": self.cost_center,
-                },
-                item=self,
-            ))
+    #         gl_entries.append(self.get_gl_dict(
+    #             {
+    #                 "account": temporary_income_account,
+    #                 "party_type": "Student",
+    #                 "party": self.student,
+    #                 "against": self.student,
+    #                 "debit": amount_before_discount,
+    #                 "debit_in_account_currency": amount_before_discount,
+    #                 "cost_center": self.cost_center,
+    #             },
+    #             item=self,
+    #         ))
             
-            if self.discount_type != "":
-                gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": receivable_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "against": self.student,
-                        "debit": total_discount_amount,
-                        "debit_in_account_currency": total_discount_amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                ))
+    #         if self.discount_type != "":
+    #             gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": receivable_account,
+    #                     "party_type": "Student",
+    #                     "party": self.student,
+    #                     "against": self.student,
+    #                     "debit": total_discount_amount,
+    #                     "debit_in_account_currency": total_discount_amount,
+    #                     "cost_center": self.cost_center,
+    #                 },
+    #                 item=self,
+    #             ))
 
-                gl_entries.append(self.get_gl_dict(
-                    {
-                        "account": temporary_income_account,
-                        "party_type": "Student",
-                        "party": self.student,
-                        "against": self.student,
-                        "credit": total_discount_amount,
-                        "credit_in_account_currency": total_discount_amount,
-                        "cost_center": self.cost_center,
-                    },
-                    item=self,
-                ))
+    #             gl_entries.append(self.get_gl_dict(
+    #                 {
+    #                     "account": temporary_income_account,
+    #                     "party_type": "Student",
+    #                     "party": self.student,
+    #                     "against": self.student,
+    #                     "credit": total_discount_amount,
+    #                     "credit_in_account_currency": total_discount_amount,
+    #                     "cost_center": self.cost_center,
+    #                 },
+    #                 item=self,
+    #             ))
 
-        from erpnext.accounts.general_ledger import make_gl_entries
-        make_gl_entries(
-            recorded_gl_entries if not self.record_income_in_temp_account else gl_entries,
-            cancel=(self.docstatus == 2),
-            update_outstanding="Yes",
-            merge_entries=False,
-        )
+    #     from erpnext.accounts.general_ledger import make_gl_entries
+    #     make_gl_entries(
+    #         recorded_gl_entries if not self.record_income_in_temp_account else gl_entries,
+    #         cancel=(self.docstatus == 2),
+    #         update_outstanding="Yes",
+    #         merge_entries=False,
+    #     )
 
 def get_fee_list(
         doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified"
 ):
     user = frappe.session.user
-    student = frappe.db.sql(
-        "select name from `tabStudent` where student_email_id= %s", user
+    guardian = frappe.db.sql(
+        "select family_code from `tabGuardian` where user= %s limit 1", user
     )
-    if student:
+    if guardian:
         return frappe.db.sql(
             """
 			select name, program, due_date, grand_total - outstanding_amount as paid_amount,
-			outstanding_amount, grand_total, currency
+			outstanding_amount, student, student_name, grand_total, route, currency, company
 			from `tabFees`
-			where student= %s and docstatus=1
+			where student in 
+            (select name from `tabStudent` where family_code=%s) 
+            and docstatus<>2
 			order by due_date asc limit {0} , {1}""".format(
                 limit_start, limit_page_length
             ),
-            student,
+            guardian,
             as_dict=True,
         )
 
@@ -737,7 +741,7 @@ def get_list_context(context=None):
         "no_breadcrumbs": True,
         "title": _("Fees"),
         "get_list": get_fee_list,
-        "row_template": "templates/includes/fee/fee_row.html",
+        "row_template": "education/doctype/fees/templates/fees_row.html",
     }
 
 

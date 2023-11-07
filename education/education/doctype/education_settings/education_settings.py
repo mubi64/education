@@ -49,3 +49,12 @@ class EducationSettings(Document):
 				"Check",
 				validate_fields_for_doctype=False,
 			)
+
+		for i, item in enumerate(self.discount_slabs):
+			for j, other_item in enumerate(self.discount_slabs):
+				if i != j:
+					if (
+						(item.from_month <= other_item.to_month <= item.to_month)
+						or (item.from_month <= other_item.from_month <= item.to_month)
+					):
+						raise ValueError("Overlapping or included periods found in the Discount Slabs.")

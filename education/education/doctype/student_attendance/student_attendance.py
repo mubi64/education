@@ -6,14 +6,16 @@ import frappe
 from erpnext import get_default_company
 from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
 from frappe import _
-from frappe.model.document import Document
+from frappe.website.website_generator import WebsiteGenerator
 from frappe.utils import formatdate, get_link_to_form, getdate
 
 from education.education.api import get_student_group_students
 
 
-class StudentAttendance(Document):
+class StudentAttendance(WebsiteGenerator):
 	def validate(self):
+		if not self.route:
+			self.route = "attendance/" + self.name
 		self.validate_mandatory()
 		self.validate_date()
 		self.set_date()
@@ -140,3 +142,37 @@ def get_holiday_list(company=None):
 			)
 		)
 	return holiday_list
+
+
+def get_attendance_list(
+        doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified"
+):
+    user = frappe.session.user
+    guardian = frappe.db.sql(
+        "select family_code from `tabGuardian` where user= %s limit 1", user
+    )
+    if guardian:
+        return frappe.db.sql(
+            """
+			select name, student, student_name, route, date, status, absent_fine_record
+			from `tabStudent Attendance`
+			where student in 
+            (select name from `tabStudent` where family_code=%s) 
+            and docstatus<>2
+			order by date asc limit {0} , {1}""".format(
+                limit_start, limit_page_length
+            ),
+            guardian,
+            as_dict=True,
+        )
+
+
+def get_list_context(context=None):
+    return {
+        "show_sidebar": True,
+        "show_search": True,
+        "no_breadcrumbs": True,
+        "title": _("Student Attendance"),
+        "get_list": get_attendance_list,
+        "row_template": "education/doctype/student_attendance/templates/student_attendance_row.html",
+    }

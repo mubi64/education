@@ -27,7 +27,15 @@
   "readmission_fee_category",
   "readmission_threshold_days",
   "readmission_fee_amount",
-  "student_count"
+  "student_count",
+  "advance_fee_discount_setting_section",
+  "enable_discount",
+  "section_break_fn7sn",
+  "apply_discount_on",
+  "column_break_c2oex",
+  "discount_expense_account",
+  "section_break_iujvm",
+  "discount_slabs"
  ],
  "fields": [
   {
@@ -164,11 +172,54 @@
    "fieldname": "student_count",
    "fieldtype": "Int",
    "label": "Student Count"
+  },
+  {
+   "fieldname": "advance_fee_discount_setting_section",
+   "fieldtype": "Section Break",
+   "label": "Advance Fee Discount Setting"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_discount",
+   "fieldtype": "Check",
+   "label": "Enable Advance Fee Discount"
+  },
+  {
+   "fieldname": "apply_discount_on",
+   "fieldtype": "Link",
+   "label": "Apply Discount on",
+   "options": "Fee Category"
+  },
+  {
+   "fieldname": "discount_slabs",
+   "fieldtype": "Table",
+   "label": "Discount Slabs",
+   "options": "Discount Slabs"
+  },
+  {
+   "depends_on": "eval:doc.enable_discount == 1",
+   "fieldname": "section_break_iujvm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_c2oex",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "discount_expense_account",
+   "fieldtype": "Link",
+   "label": "Discount Expense Account",
+   "options": "Account"
+  },
+  {
+   "depends_on": "eval:doc.enable_discount == 1",
+   "fieldname": "section_break_fn7sn",
+   "fieldtype": "Section Break"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-10-05 19:34:43.517539",
+ "modified": "2023-10-20 08:56:10.341942",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Education Settings",

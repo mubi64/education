@@ -183,17 +183,6 @@ frappe.ui.form.on("Fees", {
               if (selectedFee.length > 0) {
                 if (amount <= frm.doc.outstanding_amount) {
                   frm.events.make_payment_entry(frm, amount);
-                  // frappe.call({
-                  //   method:
-                  //     "education.education.doctype.fees.fees.record_payment",
-                  //   args: {
-                  //     fees: selectedFee,
-                  //     current_docname: frm.doc.name,
-                  //   },
-                  //   callback: function (r) {
-                  //     frm.reload_doc();
-                  //   },
-                  // });
                   d.hide();
                 } else {
                   frappe.show_alert(

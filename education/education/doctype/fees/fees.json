@@ -51,7 +51,6 @@
   "column_break_11",
   "total_taxes_and_charges",
   "grand_total",
-  "amended_from",
   "grand_total_in_words",
   "outstanding_amount",
   "edit_printing_settings",
@@ -70,17 +69,11 @@
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
-  "doc_status"
+  "route",
+  "published",
+  "amended_from"
  ],
  "fields": [
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Naming Series",
-   "options": "EDU-FEE-.YYYY.-",
-   "print_hide": 1,
-   "set_only_once": 1
-  },
   {
    "fieldname": "student",
    "fieldtype": "Link",
@@ -273,6 +266,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval:doc.is_return != 1",
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
@@ -354,13 +348,13 @@
    "default": "0",
    "fieldname": "record_income_in_temp_account",
    "fieldtype": "Check",
-   "label": "Record Income in Temp Account"
+   "label": "Record in Payable Account"
   },
   {
    "depends_on": "eval:doc.record_income_in_temp_account || doc.record_income_in_temp_account == 1",
    "fieldname": "temporary_income_account",
    "fieldtype": "Link",
-   "label": "Temporary Income Account",
+   "label": "Payable Account",
    "mandatory_depends_on": "eval:doc.record_income_in_temp_account || doc.record_income_in_temp_account == 1",
    "options": "Account"
   },
@@ -415,12 +409,6 @@
    "label": "Grand Total before Tax",
    "precision": "2",
    "read_only": 1
-  },
-  {
-   "fieldname": "doc_status",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "in_list_view": 1
   },
   {
    "fieldname": "discount_type",
@@ -492,6 +480,7 @@
   {
    "allow_on_submit": 1,
    "default": "0",
+   "depends_on": "eval:doc.is_return == 1",
    "fieldname": "is_return",
    "fieldtype": "Check",
    "label": "Is Return",
@@ -507,11 +496,34 @@
    "label": "Transportation Fee Schedule",
    "options": "Transportation Fee Schedule",
    "read_only": 1
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Route"
+  },
+  {
+   "default": "0",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Published"
+  },
+  {
+   "default": "EDU-FEE-.{student_id}.-.{posting_date}.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "EDU-FEE-.{student_id}.-.{posting_date}.-.#####"
   }
  ],
+ "has_web_view": 1,
+ "index_web_pages_for_search": 1,
+ "is_published_field": "published",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-04 21:21:49.380966",
+ "modified": "2023-11-07 13:06:29.523162",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",
@@ -558,6 +570,7 @@
    "write": 1
   }
  ],
+ "route": "fees",
  "search_fields": "student, student_name",
  "show_name_in_global_search": 1,
  "sort_field": "modified",

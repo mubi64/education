@@ -16,14 +16,9 @@ frappe.ui.form.on("Fee Collections", {
       .$input.addClass("btn-succsess")
       .css({ "background-color": "#2f9d5f", color: "white" });
     if (frm.doc.docstatus == 1 && frm.doc.is_return == 0) {
-      // var doc = await frappe.call("education.education.api.get_refund_link", {
-      //   name: frm.doc.name,
-      // });
-      // if (doc.message) {
       frm.add_custom_button(__("Make Refund"), async function () {
         const array = [];
         frm.doc.refund_against = frm.doc.name;
-        // frm.set_value("student_fee_details", ""); // Clear existing details
 
         // Define a function to make an asynchronous call and return a Promise
         function getFeeDetails(e) {
@@ -34,7 +29,7 @@ frappe.ui.form.on("Fee Collections", {
                 doctype: "Fees",
                 name: e.fees,
               },
-              callback(r) {
+              async callback(r) {
                 if (r.message && r.message.is_return === 0) {
                   const fee = r.message;
                   const row = {
@@ -53,6 +48,38 @@ frappe.ui.form.on("Fee Collections", {
                     allocated_amount: e.outstanding_amount,
                     month: fee.posting_date,
                   };
+                  try {
+                    const response = await frappe.call({
+                      method: "education.education.api.get_fee_doc",
+                      args: {
+                        name: fee.name,
+                      },
+                    });
+
+                    if (response.message && response.message.components) {
+                      const compoArray = [];
+                      frm.doc.net_total = 0;
+                      frm.doc.discount = 0;
+                      frm.doc.net_total_a_d = 0;
+                      for (
+                        let i = 0;
+                        i < response.message.components.length;
+                        i++
+                      ) {
+                        const ele = response.message.components[i];
+                        compoArray.push(ele.fees_category);
+                        let dis_amount = ele.gross_amount - ele.amount;
+                        frm.doc.net_total += ele.gross_amount;
+                        frm.doc.discount += dis_amount;
+                        frm.doc.net_total_a_d += ele.amount;
+                      }
+                      row.components = compoArray.join(", ");
+                      console.log(row.components, "check");
+                    }
+                  } catch (error) {
+                    console.error("Error fetching fee details:", error);
+                    // Handle the error gracefully (e.g., log it, set a default value, etc.)
+                  }
                   array.push(row);
                 }
                 resolve(); // Resolve the Promise when the callback is done
@@ -64,6 +91,7 @@ frappe.ui.form.on("Fee Collections", {
         // Use Promise.all to wait for all asynchronous calls to finish
         const promises = [];
         frm.doc.is_return = 1;
+        frm.doc.name = "";
         frm.copy_doc();
 
         for (let i = 0; i < frm.doc.student_fee_details.length; i++) {
@@ -80,12 +108,24 @@ frappe.ui.form.on("Fee Collections", {
         }
       });
     }
+    if (frm.doc.student_fee_details != null && frm.docstatus == 0) {
+      frm.trigger("student_fee_details");
+    }
+
+    // if (frm.doc.docstatus != 1) {
+    //   frappe.db.get_doc("Education Settings").then((doc) => {
+    // 		if (doc.enable_dicount == 1) {
+    //       frm.doc.
+    //     }
+    // 	});
+    // }
   },
 
   student: function (frm) {
     if (frm.doc.student) {
     }
   },
+
   discount_type: function (frm) {
     (frm.doc.percentage = 0), (frm.doc.discount_amount = 0);
     if (frm.doc.discount_type === "") {
@@ -145,7 +185,20 @@ frappe.ui.form.on("Fee Collections", {
     });
   },
 
-  student_fee_details: function (frm) {
+  apply_discount: async function (frm) {
+    frappe.call({
+      method: "apply_discounts",
+      doc: frm.doc,
+      callback: function () {
+        frm.refresh();
+        frm.refresh_field("student_fee_details");
+      },
+      freeze: true,
+      freeze_message: __("Please Wait ..."),
+    });
+  },
+
+  student_fee_details: function (frm, cdt, cdn) {
     let grand_total = 0;
     let grand_total_b_tax = 0;
     let total_tax_a = 0;
@@ -161,6 +214,8 @@ frappe.ui.form.on("Fee Collections", {
     frm.set_value("grand_total_b_tax", grand_total_b_tax);
     frm.set_value("total_tax_a", total_tax_a);
     frm.set_value("grand_total_b_d", grand_total_b_d);
+    frm.doc.fee_collection_payment[0].amount = frm.doc.grand_total;
+    frm.refresh_field("fee_collection_payment")
   },
 });
 
@@ -178,6 +233,7 @@ async function processFees(frm, array) {
       row.percentage = fee.percentage;
       row.amount_before_discount = fee.amount_before_discount;
       row.due_date = fee.due_date;
+      row.posting_date = fee.posting_date;
       row.grand_total_before_tax = fee.grand_total_before_tax;
       row.total_amount = fee.grand_total;
       row.total_taxes_and_charges = fee.total_taxes_and_charges;
@@ -206,9 +262,6 @@ async function processFees(frm, array) {
             frm.doc.discount += dis_amount;
             frm.doc.net_total_a_d += ele.amount;
           }
-          // const compoArray = response.message.components.map(
-          //   (ele) => ele.fees_category
-          // );
           row.components = compoArray.join(", ");
         }
       } catch (error) {
@@ -222,4 +275,17 @@ async function processFees(frm, array) {
   frm.refresh_field("net_total_a_d");
   refresh_field("student_fee_details");
   frm.trigger("student_fee_details");
+  console.log("testong");
 }
+
+frappe.ui.form.on("Student Fee Details", {
+  student_fee_details_remove: function (frm) {
+    frm.trigger("student_fee_details");
+  },
+});
+
+// frappe.ui.form.on("Fee Collection Payment", {
+//   mode_of_payment: function (frm, cdt, cdn) {
+//       console.log("test");
+//   },
+// });

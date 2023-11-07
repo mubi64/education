@@ -1,0 +1,53 @@
+{% extends "templates/web.html" %} {% block breadcrumbs %} {% include
+"templates/includes/breadcrumbs.html" %} {% endblock %} {% block header %}
+<h3>{{ name }}</h1>
+{% endblock %} {% block page_content %} {% set today =
+frappe.utils.getdate(frappe.utils.nowdate()) %}
+<div class="row transaction-subheading">
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("Student Group") }}: {{ student_group }}
+        </div>
+    </div>
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("Program") }}: {{program}}
+        </div>
+    </div>
+
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("Instructor Name") }}: {{ instructor_name }}
+        </div>
+    </div>
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("Course") }}: {{course}}
+        </div>
+    </div>
+
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("Schedule Date") }}: {{ schedule_date }}
+        </div>
+    </div>
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("From Time") }}: {{from_time}}
+        </div>
+    </div>
+
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("Room") }}: {{ room }}
+        </div>
+    </div>
+    <div class="col-xs-6">
+        <div class="m-2 border form-control">
+          {{ _("To Time") }}: {{to_time}}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- {{ frappe.format_date(posting_date) }} -->

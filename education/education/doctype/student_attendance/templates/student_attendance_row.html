@@ -1,0 +1,12 @@
+<div class="web-list-item transaction-list-item">
+  <a href="{{ doc.route }}" class="no-underline">
+    <div class="row">
+      <div class="col-sm-4 bold">{{ doc.name }}</div>
+      <div class="col-sm-2 small">{{ doc.student_name }}</div>
+      <div class="col-sm-2 small">{{ doc.status }}</div>
+      <div class="col-sm-2 small">{{ doc.date }}</div>
+      <div class="col-sm-2 small">{{ doc.date.strftime("%A") }}</div>
+
+    </div>
+  </a>
+</div>

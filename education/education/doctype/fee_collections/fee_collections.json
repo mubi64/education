@@ -21,9 +21,12 @@
   "get_all_fees",
   "column_break_rdznd",
   "column_break_6e1ku",
+  "apply_discount",
   "section_break_vwwam",
   "student_fee_details",
   "section_break_d4ocs",
+  "fee_collection_payment",
+  "section_break_yev8c",
   "mode_of_payment",
   "net_total",
   "net_total_a_d",
@@ -123,12 +126,12 @@
    "precision": "2"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Mode of Payment",
-   "options": "Mode of Payment",
-   "reqd": 1
+   "options": "Mode of Payment"
   },
   {
    "fieldname": "company",
@@ -147,7 +150,7 @@
   },
   {
    "fieldname": "grand_total",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Grand Total",
    "read_only": 1
@@ -308,12 +311,29 @@
   {
    "fieldname": "column_break_6e1ku",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fee_collection_payment",
+   "fieldtype": "Table",
+   "label": "Fee Collection Payment",
+   "options": "Fee Collection Payment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_yev8c",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.is_return == 0",
+   "fieldname": "apply_discount",
+   "fieldtype": "Button",
+   "label": "Apply Discount"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-09 09:54:14.082341",
+ "modified": "2023-10-24 10:00:34.644170",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

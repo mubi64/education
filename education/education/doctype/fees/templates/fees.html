@@ -1,0 +1,222 @@
+{% extends "templates/web.html" %} {% block breadcrumbs %} {% include
+"templates/includes/breadcrumbs.html" %} {% endblock %} {% block header %}
+<h3>{{ student_name }}</h3>
+{% endblock %} {% block page_content %} {% set today =
+frappe.utils.getdate(frappe.utils.nowdate()) %} {% set fam_code =
+frappe.get_doc("Student", student) %}
+
+<!-- print formate start -->
+{% if student_id != none %} {% set std_list = frappe.get_all("Student",
+filters={ "student_id": ["=", student_id] }) %} {% if std_list|length > 0 %}
+{% set std = frappe.get_doc("Student" , std_list[0].name) %} {% endif %} {%
+endif %} {% set company_list = frappe.get_all("Company") %} {% set company =
+frappe.get_doc("Company",company_list.name) %}
+
+<style>
+  th,
+  td {
+    border: 1px solid black;
+  }
+
+  .tab2_tr td {
+    font-weight: bold;
+  }
+  .tab3 {
+    width: 100%;
+    text-align: center;
+  }
+  .tab3 td {
+    font-weight: bold;
+  }
+</style>
+
+<table style="width: 100%">
+  <tr>
+    <td colspan="3" style="text-align: center; background-color: whitesmoke">
+      <b>Buyer/العميل</b>
+    </td>
+  </tr>
+  <tr>
+    <td style="width: 20%; background-color: whitesmoke">
+      Father / Guardian Name:
+    </td>
+    {% if student_id !=none %} {% if std.guardians|length > 0 %} {% for y in
+    std.guardians %}
+    <td style="text-align: center; width: 20%">{{y.guardian_name}}</td>
+    {% endfor %} {% else %}
+    <td style="text-align: center; width: 20%">-</td>
+    {% endif %} {% else %}
+    <td style="text-align: center; width: 20%">-</td>
+    {% endif %}
+    <td style="text-align: right; width: 20%; background-color: whitesmoke">
+      :اسم الأب / ولي الأمر
+    </td>
+    <td style="width: 2%; border: 0px"></td>
+    <td style="background-color: whitesmoke">Invoice Date / تاريخ الفاتورة</td>
+    <td style="text-align: center">{{posting_date}}</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Student Name:</td>
+    <td style="text-align: center">{{student_name}}</td>
+    <td style="text-align: right; background-color: whitesmoke">:اسم الطالب</td>
+    <td style="width: 2%; border: 0px"></td>
+    <td style="background-color: whitesmoke">Due Date / تاريخ الاستحقاق</td>
+    <td style="text-align: center">{{due_date}}</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Class - Section:</td>
+    <td style="text-align: center">{{program}}</td>
+    <td style="text-align: right; background-color: whitesmoke">
+      :الصف - الفصل
+    </td>
+    <td style="width: 2%; border: 0px"></td>
+    <td style="background-color: whitesmoke">Fee Months / فترة الرسوم</td>
+    <td style="text-align: center"></td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Student ID:</td>
+    <td style="text-align: center">{{student_id}}</td>
+    <td style="text-align: right; background-color: whitesmoke">:رمز الطالب</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Family Code:</td>
+    <td style="text-align: center">
+      {% if student_id != none %} {{std.family_code}} {% endif %}
+    </td>
+    <td style="background-color: whitesmoke; text-align: right">
+      :رمز العائلة
+    </td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">VAT Registration Number:</td>
+    <td style="text-align: center"></td>
+    <td style="background-color: whitesmoke; text-align: right">
+      رقم تسجيل ضريبة القيمة <br />:المضافة
+    </td>
+  </tr>
+</table>
+<br>
+<table class="tab2" style="width: 100%;">
+  <tr>
+    <td colspan="5" style="background-color: whitesmoke; border-right: 0px">
+      <b>Line Items</b>
+    </td>
+    <td
+      colspan="4"
+      style="background-color: whitesmoke; text-align: right; border-left: 0px"
+    >
+      <b>تفاصيل</b>
+    </td>
+  </tr>
+  <tr class="tab2_tr" style="text-align: center">
+    <td style="background-color: whitesmoke">
+      Nature of goods or services<br />
+      تفاصيل السلع أو الخدمات
+    </td>
+    <td style="background-color: whitesmoke">
+      Unit Price<br />
+      سعر <br />الوحدة
+    </td>
+    <td style="background-color: whitesmoke">
+      Quantity<br />
+      الكمية
+    </td>
+    <td style="background-color: whitesmoke">
+      Sub Total<br />
+      المجموع
+    </td>
+    <td style="background-color: whitesmoke">
+      Discount<br />
+      خصومات
+    </td>
+    <td style="background-color: whitesmoke">
+      Taxable Amount<br />
+      المبلغ الخاضع <br />للضربية
+    </td>
+    <td style="background-color: whitesmoke">
+      VAT %<br />
+      نسبة <br />الضربية
+    </td>
+    <td style="background-color: whitesmoke">
+      VAT Amount<br />
+      مبلغ <br />الضربية
+    </td>
+    <td style="background-color: whitesmoke">
+      Item Subtotal (Including VAT)<br />
+      المجموع <br />(شامل ضريبة القيمة المضافة)
+    </td>
+  </tr>
+  {% for x in components %}
+  <tr>
+    <td>{{x.fees_category}}</td>
+    <td>{{x.gross_amount}}</td>
+    <td>1</td>
+    <td>{{x.gross_amount}}</td>
+    <td>{{x.gross_amount-x.amount}}</td>
+    <td>{{x.amount}}</td>
+    <td>15%</td>
+    <td>{{x.taxes_and_charges}}</td>
+    <td>{{x.amount_after_tax}}</td>
+  </tr>
+  {% endfor %}
+</table>
+<br />
+<table class="tab3">
+  <tr>
+    <td style="background-color: whitesmoke; width: 40%">
+      Total (Excluding VAT)
+    </td>
+    <td style="background-color: whitesmoke; width: 40%">
+      الإجمالي <br />(غير شامل ضربية القيمة المضافة)
+    </td>
+    {% set ns = namespace (total = 0) %} {% for y in components %} {% set
+    ns.total = ns.total + y.gross_amount %} {% endfor %}
+    <td style="width: 20%">{{"{:,.1f}".format(ns.total)}}</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Discount</td>
+    <td style="background-color: whitesmoke">مجموع الخصم</td>
+    {% set ns = namespace (total = 0) %} {% for y in components %} {% set
+    ns.total = ns.total + (y.gross_amount - y.amount) %} {% endfor %}
+    <td>{{"{:,.1f}".format(ns.total)}}</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">
+      Total Taxable Amount (Excluding VAT)
+    </td>
+    <td style="background-color: whitesmoke">
+      إجمالي المبلغ الخاضع للضريبة <br />
+      (غير شامل ضربية القيمة المضافة)
+    </td>
+    {% set ns = namespace (total = 0) %} {% for y in components %} {% set
+    ns.total = ns.total + y.amount %} {% endfor %}
+    <td>{{"{:,.1f}".format(ns.total)}}</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Total VAT</td>
+    <td style="background-color: whitesmoke">إجمالي ضريبة القيمة المضافة</td>
+    {% set ns = namespace (total = 0) %} {% for y in components %} {% set
+    ns.total = ns.total + y.taxes_and_charges %} {% endfor %}
+    <td>{{"{:,.1f}".format(ns.total)}}</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Invoice Amount</td>
+    <td style="background-color: whitesmoke">إجمالي المبلغ شامل ضريبة</td>
+    {% set ns = namespace (total = 0) %} {% for y in components %} {% set
+    ns.total = ns.total + y.amount_after_tax %} {% endfor %}
+    <td>{{"{:,.1f}".format(ns.total)}}</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Arrears</td>
+    <td style="background-color: whitesmoke">المستحقات السابقة</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td style="background-color: whitesmoke">Due Balance</td>
+    <td style="background-color: whitesmoke">المبلغ مستحق</td>
+    {% set ns = namespace (total = 0) %} {% for y in components %} {% set
+    ns.total = ns.total + y.amount_after_tax %} {% endfor %}
+    <td>{{"{:,.1f}".format(ns.total)}}</td>
+  </tr>
+</table>
+{% endblock %}

@@ -21,7 +21,9 @@
   "column_break_9",
   "from_time",
   "to_time",
-  "title"
+  "title",
+  "route",
+  "published"
  ],
  "fields": [
   {
@@ -122,10 +124,26 @@
    "label": "Program",
    "options": "Program",
    "read_only": 1
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Route"
+  },
+  {
+   "default": "1",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Published"
   }
  ],
+ "has_web_view": 1,
+ "index_web_pages_for_search": 1,
+ "is_published_field": "published",
  "links": [],
- "modified": "2022-12-13 15:49:43.766325",
+ "modified": "2023-10-13 14:27:02.815930",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Course Schedule",
@@ -145,7 +163,7 @@
    "write": 1
   }
  ],
- "restrict_to_domain": "",
+ "route": "timetable",
  "sort_field": "schedule_date",
  "sort_order": "DESC",
  "states": [],

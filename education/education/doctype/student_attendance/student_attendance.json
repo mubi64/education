@@ -17,6 +17,8 @@
   "date",
   "status",
   "leave_application",
+  "route",
+  "published",
   "amended_from"
  ],
  "fields": [
@@ -101,15 +103,31 @@
    "fieldtype": "Read Only",
    "label": "Student Mobile Number",
    "options": "Phone"
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Route"
+  },
+  {
+   "default": "1",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Published"
   }
  ],
+ "has_web_view": 1,
  "index_web_pages_for_search": 1,
+ "is_published_field": "published",
  "is_submittable": 1,
  "links": [],
- "modified": "2021-03-24 00:02:11.005896",
+ "modified": "2023-10-13 14:36:21.212439",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Student Attendance",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -127,8 +145,10 @@
    "write": 1
   }
  ],
- "restrict_to_domain": "",
+ "route": "attendance",
  "sort_field": "modified",
  "sort_order": "DESC",
- "title_field": "student_name"
+ "states": [],
+ "title_field": "student_name",
+ "track_changes": 1
 }

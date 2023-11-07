@@ -7,11 +7,13 @@ from datetime import datetime
 
 import frappe
 from frappe import _
-from frappe.model.document import Document
+from frappe.website.website_generator import WebsiteGenerator
 
 
-class CourseSchedule(Document):
+class CourseSchedule(WebsiteGenerator):
 	def validate(self):
+		if not self.route:
+			self.route = "timetable/" + self.name
 		self.instructor_name = frappe.db.get_value(
 			"Instructor", self.instructor, "instructor_name"
 		)
@@ -99,3 +101,41 @@ class CourseSchedule(Document):
 
 		validate_overlap_for(self, "Assessment Plan", "room")
 		validate_overlap_for(self, "Assessment Plan", "supervisor", self.instructor)
+
+def get_course_list(
+        doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified"
+):
+    user = frappe.session.user
+    guardian = frappe.db.sql(
+        "select family_code from `tabGuardian` where user= %s limit 1", user
+    )
+    if guardian:
+        return frappe.db.sql(
+            """
+			select name, student_group, program, instructor, instructor_name, course, schedule_date, room, from_time, to_time, route
+			from `tabCourse Schedule`
+			where student_group in 
+            (SELECT SGS.parent
+				FROM `tabStudent Group Student` AS SGS
+				INNER JOIN `tabStudent` AS Student
+				ON SGS.student_name = Student.student_name
+				WHERE Student.family_code = %s) 
+            and docstatus<>2
+			order by schedule_date asc limit {0} , {1}""".format(
+                limit_start, limit_page_length
+            ),
+            guardian,
+            as_dict=True,
+        )
+
+
+def get_list_context(context=None):
+    return {
+        "show_sidebar": True,
+        "show_search": True,
+        "no_breadcrumbs": True,
+        "title": _("Course Schedule"),
+        "get_list": get_course_list,
+        "row_template": "education/doctype/course_schedule/templates/course_schedule_row.html",
+    }
+

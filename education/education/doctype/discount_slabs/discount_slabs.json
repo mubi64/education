@@ -1,0 +1,69 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-10-19 16:47:03.611839",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "from_month",
+  "discount_type",
+  "column_break_pnglb",
+  "to_month",
+  "amount",
+  "percentage"
+ ],
+ "fields": [
+  {
+   "fieldname": "from_month",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "From Month",
+   "mandatory_depends_on": "eval:doc.to_month != null"
+  },
+  {
+   "fieldname": "discount_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Discount Type",
+   "options": "\nPercentage\nAmount"
+  },
+  {
+   "fieldname": "column_break_pnglb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_month",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "To Month",
+   "mandatory_depends_on": "eval:doc.from_month != null"
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Amount\"",
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "label": "Amount",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Amount\""
+  },
+  {
+   "depends_on": "eval:doc.discount_type == \"Percentage\"",
+   "fieldname": "percentage",
+   "fieldtype": "Percent",
+   "label": "Percentage",
+   "mandatory_depends_on": "eval:doc.discount_type == \"Percentage\""
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-10-23 12:23:50.011571",
+ "modified_by": "Administrator",
+ "module": "Education",
+ "name": "Discount Slabs",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -4,7 +4,7 @@
 
 import frappe
 from frappe import _
-from frappe.model.document import Document
+from frappe.website.website_generator import WebsiteGenerator
 from frappe.utils import flt
 from frappe.utils.csvutils import getlink
 
@@ -12,8 +12,10 @@ import education.education
 from education.education.api import get_assessment_details, get_grade
 
 
-class AssessmentResult(Document):
+class AssessmentResult(WebsiteGenerator):
 	def validate(self):
+		if not self.route:
+			self.route = "progress-report/" + self.name
 		education.education.validate_student_belongs_to_group(
 			self.student, self.student_group
 		)
@@ -57,3 +59,37 @@ class AssessmentResult(Document):
 					getlink("Assessment Result", assessment_result[0].name)
 				)
 			)
+
+
+def get_assessment_result_list(
+        doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified"
+):
+    user = frappe.session.user
+    guardian = frappe.db.sql(
+        "select family_code from `tabGuardian` where user= %s limit 1", user
+    )
+    if guardian:
+        return frappe.db.sql(
+            """
+			select name, assessment_plan, program, course, grading_scale, assessment_group, student_group, route
+			from `tabAssessment Result`
+			where student in 
+            (select name from `tabStudent` where family_code=%s) 
+            and docstatus<>2
+			order by name asc limit {0} , {1}""".format(
+                limit_start, limit_page_length
+            ),
+            guardian,
+            as_dict=True,
+        )
+
+
+def get_list_context(context=None):
+    return {
+        "show_sidebar": True,
+        "show_search": True,
+        "no_breadcrumbs": True,
+        "title": _("Progress Report"),
+        "get_list": get_assessment_result_list,
+        "row_template": "education/doctype/assessment_result/templates/assessment_result_row.html",
+    }
