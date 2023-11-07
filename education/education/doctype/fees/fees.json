@@ -523,7 +523,7 @@
  "is_published_field": "published",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-11-07 13:06:29.523162",
+ "modified": "2023-11-07 15:41:25.217649",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",
@@ -575,6 +575,5 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
- "title_field": "student_name"
+ "states": []
 }

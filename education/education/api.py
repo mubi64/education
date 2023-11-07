@@ -539,6 +539,7 @@ def get_advanced_student_fee(student = None, family_code = None):
 		["student", "in", student if family_code == None else student_list],
 		["outstanding_amount", "!=", 0],
 		["docstatus", "!=", 2],
+		["is_return", "=", 0],
 		["posting_date", ">", today()],
 	], fields=["*"])
 	if len(outstanding_fees) > 0 and len(student_fee) > 0:
@@ -557,6 +558,7 @@ def get_outstanding_student_fee(student = None, family_code = None):
 		["student", "in", student if family_code == None else student_list],
 		["outstanding_amount", "!=", 0],
 		["docstatus", "!=", 2],
+		["is_return", "=", 0],
 		["posting_date", "<=", today()],
 	], fields=["*"])
 	
