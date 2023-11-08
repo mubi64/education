@@ -101,7 +101,6 @@ class FeeCollections(Document):
 			total_discount_amount = 0
 			for dis_slab in edu_settings.discount_slabs:
 				if dis_slab.from_month <= len(advance_fee) <= dis_slab.to_month:
-					print(dis_slab.from_month, "dis_slab.from_month")
 					for adv_fee in advance_fee:
 						fee = frappe.get_doc("Fees", adv_fee.fees)
 						fee.discount_type = dis_slab.discount_type
@@ -112,7 +111,6 @@ class FeeCollections(Document):
 						fee.fee_expense_account = edu_settings.discount_expense_account
 						fee.save()
 						total_discount_amount += fee.total_discount_amount
-						# print(fee.discount_type, fee.percentage, fee.total_discount_amount, "Check list")
 				else:
 					for adv_fee in advance_fee:
 						fee = frappe.get_doc("Fees", adv_fee.fees)
@@ -132,7 +130,6 @@ class FeeCollections(Document):
 
 		for row in self.student_fee_details:
 			amount_in_fee_table += row.total_amount
-		print(amount_in_fee_table, "check list")
 		if float(amount_in_table) != float(amount_in_fee_table):
 			frappe.throw(_("Amount must be equal to grand total"))
 
@@ -167,7 +164,6 @@ class FeeCollections(Document):
 							"reference_name": fee_doc.name
 						})
 					if fee_doc.discount_type != "":
-						print(fee_doc.name, fee_doc.discount_type, fee_doc.total_discount_amount, "testing ")
 						journal_entry.append("accounts", {
 							"account": fee_doc.fee_expense_account,
 							"credit_in_account_currency": fee_doc.total_discount_amount,
@@ -220,7 +216,7 @@ class FeeCollections(Document):
 				for row in self.fee_collection_payment:
 					amount = 0
 					outst_amount = 0
-					amount = row.amount / self.grand_total
+					amount = flt(row.amount) / flt(self.grand_total)
 					amount = amount * 100
 					outst_amount = item.outstanding_amount / 100
 					outst_amount = outst_amount * amount
