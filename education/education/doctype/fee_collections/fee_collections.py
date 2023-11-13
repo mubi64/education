@@ -31,7 +31,7 @@ class FeeCollections(Document):
 						"percentage": self.percentage,
 						"fee_expense_account": self.fee_expense_account
 					})
-					cr_fee.total_discount_amount = cr_fee.amount_before_discount - cr_fee.grand_total_before_tax
+					cr_fee.total_discount_amount = flt(cr_fee.amount_before_discount) - flt(cr_fee.grand_total_before_tax)
 					cr_fee.save()
 				elif self.discount_type != "":
 					frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
@@ -77,7 +77,7 @@ class FeeCollections(Document):
 			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
 			for fee_com in fee_child_com.components:
 				compoArray.append(fee_com.fees_category)
-				dis_amount = fee_com.gross_amount - fee_com.amount
+				dis_amount = flt(fee_com.gross_amount) - flt(fee_com.amount)
 				self.net_total += fee_com.gross_amount
 				self.discount += dis_amount
 				self.net_total_a_d += fee_com.amount
@@ -173,10 +173,10 @@ class FeeCollections(Document):
 					for row in self.fee_collection_payment:
 						amount = 0
 						outst_amount = 0
-						amount = row.amount / float(self.grand_total)
-						amount = amount * 100
-						outst_amount = fee_doc.grand_total / 100
-						outst_amount = outst_amount * amount
+						amount = flt(row.amount) / float(self.grand_total)
+						amount = flt(amount) * 100
+						outst_amount = flt(fee_doc.grand_total) / 100
+						outst_amount = flt(outst_amount) * flt(amount)
 						credit_account = get_bank_cash_account(row.mode_of_payment, self.company)
 						journal_entry.append("accounts", {
 							"account": credit_account.get('account'),
@@ -217,9 +217,9 @@ class FeeCollections(Document):
 					amount = 0
 					outst_amount = 0
 					amount = flt(row.amount) / flt(self.grand_total)
-					amount = amount * 100
-					outst_amount = item.outstanding_amount / 100
-					outst_amount = outst_amount * amount
+					amount = flt(amount) * 100
+					outst_amount = flt(item.outstanding_amount) / 100
+					outst_amount = flt(outst_amount) * flt(amount)
 					
 					temp_dict = {
 						"name": item.student_id,
