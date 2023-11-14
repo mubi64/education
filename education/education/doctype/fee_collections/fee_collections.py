@@ -233,7 +233,7 @@ class FeeCollections(Document):
 					values.reference_no = self.reference_no
 					values.reference_date = self.reference_date
 					for ref in values.references:
-						ref.allocated_amount = round(outst_amount, 2)
+						ref.allocated_amount = round(outst_amount, 3)
 
 					values.insert()
 					values.submit()
