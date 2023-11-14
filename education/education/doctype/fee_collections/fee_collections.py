@@ -129,8 +129,10 @@ class FeeCollections(Document):
 			amount_in_table += row.amount
 
 		for row in self.student_fee_details:
+			# print(row.total_amount,  "\n\n\n\n\n")
 			amount_in_fee_table += row.total_amount
-		if float(amount_in_table) != float(amount_in_fee_table):
+		# print(round(amount_in_table, 3), amount_in_fee_table, round(amount_in_fee_table,3), round(amount_in_fee_table, 2))
+		if round(amount_in_table, 3) != round(amount_in_fee_table, 3):
 			frappe.throw(_("Amount must be equal to grand total"))
 
 		if self.is_return == 1:

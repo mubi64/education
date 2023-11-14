@@ -67,7 +67,7 @@ class Fees(AccountsController, WebsiteGenerator):
             self.append_discount()
             self.set_missing_accounts_and_fields()
             self.calculate_total()
-            print(self.total_discount_amount, "checning")
+            # print(self.total_discount_amount, "checning")
 
     # def set_late_fee_fine_and_readmission(self):
     #     due_date = str(self.due_date)

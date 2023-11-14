@@ -255,6 +255,7 @@
    "fieldname": "grand_total",
    "fieldtype": "Currency",
    "label": "Grand Total",
+   "precision": "3",
    "read_only": 1
   },
   {
@@ -271,6 +272,7 @@
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
    "no_copy": 1,
+   "precision": "3",
    "read_only": 1
   },
   {
@@ -523,7 +525,7 @@
  "is_published_field": "published",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-11-07 15:41:25.217649",
+ "modified": "2023-11-14 09:57:12.455500",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",
