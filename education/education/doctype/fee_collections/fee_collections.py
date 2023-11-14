@@ -92,11 +92,22 @@ class FeeCollections(Document):
 		advance_fee = []
 		edu_settings = frappe.get_doc("Education Settings")
 		if edu_settings.enable_discount == 1:
+			student_count = {}
 			advance_fee = []
+			
 			for fee in self.student_fee_details:
-				if ((str(fee.due_date) >= now())
-					and (edu_settings.apply_discount_on in fee.components)):
-					advance_fee.append(fee)
+				student = fee.student_id
+				if student in student_count:
+					student_count[student] += 1
+				else:
+					student_count[student] = 1
+
+			for fee in self.student_fee_details:
+				student = fee.student_id
+				for dis_slab in edu_settings.discount_slabs:
+					if dis_slab.from_month <= student_count[student] <= dis_slab.to_month and ((str(fee.due_date) >= now())
+						and (edu_settings.apply_discount_on in fee.components)):
+						advance_fee.append(fee)
 		
 			total_discount_amount = 0
 			for dis_slab in edu_settings.discount_slabs:
