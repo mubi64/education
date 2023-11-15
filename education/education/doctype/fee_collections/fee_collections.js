@@ -153,6 +153,8 @@ frappe.ui.form.on("Fee Collections", {
         frm.doc.discount = r.message.discount;
         frm.doc.net_total_a_d = r.message.net_total_a_d;
       },
+      freeze: true,
+      freeze_message: __("Please Wait ..."),
     });
   },
 
@@ -172,6 +174,8 @@ frappe.ui.form.on("Fee Collections", {
         frm.doc.discount = r.message.discount;
         frm.doc.net_total_a_d = r.message.net_total_a_d;
       },
+      freeze: true,
+      freeze_message: __("Please Wait ..."),
     });
   },
 
@@ -191,6 +195,8 @@ frappe.ui.form.on("Fee Collections", {
         frm.doc.discount = r.message.discount;
         frm.doc.net_total_a_d = r.message.net_total_a_d;
       },
+      freeze: true,
+      freeze_message: __("Please Wait ..."),
     });
   },
 
