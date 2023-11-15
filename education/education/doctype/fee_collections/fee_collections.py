@@ -35,13 +35,16 @@ class FeeCollections(Document):
 					cr_fee.save()
 				elif self.discount_type != "":
 					frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
+			
 			self.advance_fee_dicount()
 		self.update_student_table()
 		
 	def update_student_table(self):
-		# if self.student:
 		fee_name_list = [fee.fees for fee in self.student_fee_details]
-		fee_list = []
+
+		fee_list = frappe.get_all("Fees", filters=[["name", "in", fee_name_list]], fields=["*"], order_by="student_name asc")
+		self.student_fee_details = []
+
 		self.grand_total = 0
 		self.grand_total_b_d = 0
 		self.grand_total_b_tax = 0
@@ -51,28 +54,26 @@ class FeeCollections(Document):
 		self.discount = 0
 		self.net_total_a_d = 0
 
-		fee_list = frappe.get_all("Fees", filters=[["name", "in", fee_name_list]], fields=["*"], order_by="student_name asc")
-		
-
-		self.student_fee_details = []
 		for fee in fee_list:
 			row = self.append('student_fee_details', {})
-			row.fees = fee.name
-			row.student_id = fee.student
-			row.student_name = fee.student_name
-			row.discount_type = fee.discount_type
-			row.discount_amount = fee.discount_amount
-			row.percentage = fee.percentage
-			row.amount_before_discount = fee.amount_before_discount
-			row.due_date = fee.due_date
-			row.posting_date = fee.posting_date
-			row.grand_total_before_tax = fee.grand_total_before_tax
-			row.total_amount = fee.grand_total
-			row.total_taxes_and_charges = fee.total_taxes_and_charges
-			row.outstanding_amount = fee.outstanding_amount
-			row.allocated_amount = fee.outstanding_amount
-			row.month = formatdate(fee.posting_date, "MMMM-yyyy")
-			row.is_return = fee.is_return
+			row.update({
+				'fees': fee.name,
+				'student_id': fee.student,
+				'student_name': fee.student_name,
+				'discount_type': fee.discount_type,
+				'discount_amount': fee.discount_amount,
+				'percentage': fee.percentage,
+				'amount_before_discount': fee.amount_before_discount,
+				'due_date': fee.due_date,
+				'posting_date': fee.posting_date,
+				'grand_total_before_tax': fee.grand_total_before_tax,
+				'total_amount': fee.grand_total,
+				'total_taxes_and_charges': fee.total_taxes_and_charges,
+				'outstanding_amount': fee.outstanding_amount,
+				'allocated_amount': fee.outstanding_amount,
+				'month': formatdate(fee.posting_date, "MMMM-yyyy"),
+				'is_return': fee.is_return
+			})
 			compoArray = []
 			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
 			for fee_com in fee_child_com.components:
@@ -83,42 +84,52 @@ class FeeCollections(Document):
 				self.net_total_a_d += fee_com.amount
 			row.components = ", ".join(compoArray)
 			self.grand_total += fee.grand_total
-			self.grand_total_b_tax += row.grand_total_before_tax
-			self.total_tax_a += row.total_taxes_and_charges
-			self.grand_total_b_d += row.amount_before_discount
+			self.grand_total_b_tax += fee.grand_total_before_tax
+			self.total_tax_a += fee.total_taxes_and_charges
+			self.grand_total_b_d += fee.amount_before_discount
 			self.total_d_a += fee.total_discount_amount
 	
 	def advance_fee_dicount(self):
 		advance_fee = []
 		edu_settings = frappe.get_doc("Education Settings")
+
 		if edu_settings.enable_discount == 1:
 			student_count = {}
-			advance_fee = []
 			
+			# Count the occurrences of each student
 			for fee in self.student_fee_details:
 				student = fee.student_id
-				if student in student_count:
-					student_count[student] += 1
-				else:
-					student_count[student] = 1
+				student_count[student] = student_count.get(student,0) + 1
+				# if student in student_count:
+				# 	student_count[student] += 1
+				# else:
+				# 	student_count[student] = 1
 
 			for fee in self.student_fee_details:
 				student = fee.student_id
+
+				# Check eligibility for discount
 				for dis_slab in edu_settings.discount_slabs:
-					if dis_slab.from_month <= student_count[student] <= dis_slab.to_month and ((str(fee.due_date) >= now())
-						and (edu_settings.apply_discount_on in fee.components)):
+					due_date_condition = str(fee.due_date) >= now()
+					discount_component_condition = edu_settings.apply_discount_on in fee.components
+
+					if (dis_slab.from_month <= student_count[student] <= dis_slab.to_month 
+		 				and (due_date_condition and discount_component_condition)):
 						advance_fee.append(fee)
 		
 			total_discount_amount = 0
+
 			for dis_slab in edu_settings.discount_slabs:
 				if dis_slab.from_month <= len(advance_fee) <= dis_slab.to_month:
 					for adv_fee in advance_fee:
 						fee = frappe.get_doc("Fees", adv_fee.fees)
 						fee.discount_type = dis_slab.discount_type
+
 						if dis_slab.discount_type == "Percentage":
 							fee.percentage = dis_slab.percentage
 						elif dis_slab.discount_type == "Amount":
 							fee.discount_amount = dis_slab.amount
+
 						fee.fee_expense_account = edu_settings.discount_expense_account
 						fee.save()
 						total_discount_amount += fee.total_discount_amount
@@ -129,110 +140,35 @@ class FeeCollections(Document):
 						fee.percentage = 0,
 						fee.discount_amount = 0
 						fee.save()
+
 			self.total_d_a = total_discount_amount
 
 
-
 	def on_submit(self):
-		amount_in_table = 0
-		amount_in_fee_table = 0
-		for row in self.fee_collection_payment:
-			amount_in_table += row.amount
-
-		for row in self.student_fee_details:
-			# print(row.total_amount,  "\n\n\n\n\n")
-			amount_in_fee_table += row.total_amount
-		# print(round(amount_in_table, 3), amount_in_fee_table, round(amount_in_fee_table,3), round(amount_in_fee_table, 2))
-		if round(amount_in_table, 3) != round(amount_in_fee_table, 3):
-			frappe.throw(_("Amount must be equal to grand total"))
+		self.validate_amounts()
 
 		if self.is_return == 1:
-			from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_account
-
 			for item in self.student_fee_details:
 				fee_doc = frappe.get_doc("Fees", item.fees, fields=['*'])
+
 				if fee_doc.outstanding_amount == 0:
 					fee_doc.is_return = 1
 					fee_doc.save()
-					
-					journal_entry = frappe.get_doc({
-						"doctype": "Journal Entry",
-						"posting_date": now(),
-						"accounts": [],
-					})
+					self.create_journal_entry()
 
-					for com in fee_doc.components:
-						incom_acc = frappe.get_doc("Fee Category", com.fees_category)
-						journal_entry.append("accounts", {
-							"account": incom_acc.income_account,
-							"debit_in_account_currency": com.amount,
-							"reference_type": "Fees",
-							"reference_name": fee_doc.name
-						})
-					for tax in fee_doc.taxes:
-						journal_entry.append("accounts", {
-							"account": tax.account_head,
-							"debit_in_account_currency": tax.tax_amount,
-							"reference_type": "Fees",
-							"reference_name": fee_doc.name
-						})
-					if fee_doc.discount_type != "":
-						journal_entry.append("accounts", {
-							"account": fee_doc.fee_expense_account,
-							"credit_in_account_currency": fee_doc.total_discount_amount,
-							"reference_type": "Fees",
-							"reference_name": fee_doc.name
-						})
-					for row in self.fee_collection_payment:
-						amount = 0
-						outst_amount = 0
-						amount = flt(row.amount) / float(self.grand_total)
-						amount = flt(amount) * 100
-						outst_amount = flt(fee_doc.grand_total) / 100
-						outst_amount = flt(outst_amount) * flt(amount)
-						credit_account = get_bank_cash_account(row.mode_of_payment, self.company)
-						journal_entry.append("accounts", {
-							"account": credit_account.get('account'),
-							"credit_in_account_currency": outst_amount, # grand_total_before_tax,
-							"reference_type": "Fees",
-							"reference_name": fee_doc.name
-						})
-					# journal_entry.append("accounts", {
-					# 	"account": credit_account.get('account'),
-					# 	"credit_in_account_currency": fee_doc.total_taxes_and_charges,
-					# 	"party_type": "Student",
-					# 	"party": fee_doc.student
-					# 	# "reference_type": "Fees",
-					# 	# "reference_name": fee_doc.name
-					# })
-					journal_entry.insert()
-					journal_entry.submit()
-
-				# 	fee_doc.make_return_gl_entries()
-				# payment = frappe.db.get_list("Payment Entry", filters=[
-				# 	["Payment Entry Reference", "reference_name", "=", item.fees]
-				# ], fields=['name'])
-				# if len(payment) > 0:
-				# 	payment_entry = frappe.get_doc("Payment Entry", payment[0].name)
-				# 	payment_entry.cancel()
 
 		else:
-			temp_dict = {}
-			
 			for item in self.student_fee_details:
 				current_fee = frappe.get_doc("Fees", item.fees)
+
 				if current_fee.docstatus != 1:
 					current_fee.fee_collections = self.name
 					current_fee.save()
 					current_fee.submit()
-				values = {}
+
 				for row in self.fee_collection_payment:
-					amount = 0
-					outst_amount = 0
-					amount = flt(row.amount) / flt(self.grand_total)
-					amount = flt(amount) * 100
-					outst_amount = flt(item.outstanding_amount) / 100
-					outst_amount = flt(outst_amount) * flt(amount)
+					amount_percentage = flt(row.amount) / flt(self.grand_total) * 100
+					outst_amount = flt(item.outstanding_amount) / 100 * amount_percentage
 					
 					temp_dict = {
 						"name": item.student_id,
@@ -249,6 +185,74 @@ class FeeCollections(Document):
 					values.insert()
 					values.submit()
 			
+
+	def validate_amounts(self):
+		amount_in_table = sum(row.amount for row in self.fee_collection_payment)
+		amount_in_fee_table = sum(row.total_amount for row in self.student_fee_details)
+
+		if round(amount_in_table, 3) != round(amount_in_fee_table, 3):
+			frappe.throw(_("Amount must be equal to grand total"))
+
+	def create_journal_entry(self, fee_doc):
+		from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_account
+
+		journal_entry = frappe.get_doc({
+			"doctype": "Journal Entry",
+			"posting_date": now(),
+			"accounts": [],
+		})
+
+		for com in fee_doc.components:
+			incom_acc = frappe.get_doc("Fee Category", com.fees_category)
+			journal_entry.append("accounts", {
+				"account": incom_acc.income_account,
+				"debit_in_account_currency": com.amount,
+				"reference_type": "Fees",
+				"reference_name": fee_doc.name
+			})
+
+		for tax in fee_doc.taxes:
+			journal_entry.append("accounts", {
+				"account": tax.account_head,
+				"debit_in_account_currency": tax.tax_amount,
+				"reference_type": "Fees",
+				"reference_name": fee_doc.name
+			})
+
+		if fee_doc.discount_type != "":
+			journal_entry.append("accounts", {
+				"account": fee_doc.fee_expense_account,
+				"credit_in_account_currency": fee_doc.total_discount_amount,
+				"reference_type": "Fees",
+				"reference_name": fee_doc.name
+			})
+
+		for row in self.fee_collection_payment:
+			amount_percentage = 0
+			outst_amount = 0
+			amount_percentage = flt(row.amount) / float(self.grand_total) * 100
+			outst_amount = flt(fee_doc.grand_total) / 100 * flt(amount_percentage)
+			credit_account = get_bank_cash_account(row.mode_of_payment, self.company)
+			
+			journal_entry.append("accounts", {
+				"account": credit_account.get('account'),
+				"credit_in_account_currency": outst_amount, # grand_total_before_tax,
+				"reference_type": "Fees",
+				"reference_name": fee_doc.name
+			})
+		
+		journal_entry.insert()
+		journal_entry.submit()
+
+	def create_payment_entry(self, item):
+		amount_percentage = flt(item.amount) / flt(self.grand_total) * 100
+		outst_amount = flt(item.outstanding_amount) / 100 * amount_percentage
+
+		temp_dict = {
+						"name": item.student_id,
+						"amount": outst_amount, # item.outstanding_amount,
+						"fee": item.fees
+					}
 
 	def get_payment_entry(
 		self,
