@@ -22,19 +22,20 @@ class FeeCollections(Document):
 	@frappe.whitelist()
 	def apply_discounts(self):
 		if self.is_return == 0:
-			for i, fee in enumerate(self.student_fee_details):
-				cr_fee = frappe.get_doc("Fees", fee.fees)
-				if cr_fee.docstatus != 1:
-					cr_fee.update({
-						"discount_type": self.discount_type,
-						"discount_amount": self.discount_amount,
-						"percentage": self.percentage,
-						"fee_expense_account": self.fee_expense_account
-					})
-					cr_fee.total_discount_amount = flt(cr_fee.amount_before_discount) - flt(cr_fee.grand_total_before_tax)
-					cr_fee.save()
-				elif self.discount_type != "":
-					frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
+			if self.discount_type != "":
+				for i, fee in enumerate(self.student_fee_details):
+					cr_fee = frappe.get_doc("Fees", fee.fees)
+					if cr_fee.docstatus != 1:
+						cr_fee.update({
+							"discount_type": self.discount_type,
+							"discount_amount": self.discount_amount,
+							"percentage": self.percentage,
+							"fee_expense_account": self.fee_expense_account
+						})
+						cr_fee.total_discount_amount = flt(cr_fee.amount_before_discount) - flt(cr_fee.grand_total_before_tax)
+						cr_fee.save()
+					elif self.discount_type != "":
+						frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
 			
 			self.advance_fee_dicount()
 		self.update_student_table()
@@ -74,15 +75,19 @@ class FeeCollections(Document):
 				'month': formatdate(fee.posting_date, "MMMM-yyyy"),
 				'is_return': fee.is_return
 			})
+
 			compoArray = []
-			fee_child_com = frappe.get_doc("Fees", fee.name, fields=["name", "components"])
-			for fee_com in fee_child_com.components:
+			components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
+			
+			for fee_com in components:
 				compoArray.append(fee_com.fees_category)
 				dis_amount = flt(fee_com.gross_amount) - flt(fee_com.amount)
 				self.net_total += fee_com.gross_amount
 				self.discount += dis_amount
 				self.net_total_a_d += fee_com.amount
+
 			row.components = ", ".join(compoArray)
+			
 			self.grand_total += fee.grand_total
 			self.grand_total_b_tax += fee.grand_total_before_tax
 			self.total_tax_a += fee.total_taxes_and_charges
@@ -100,10 +105,6 @@ class FeeCollections(Document):
 			for fee in self.student_fee_details:
 				student = fee.student_id
 				student_count[student] = student_count.get(student,0) + 1
-				# if student in student_count:
-				# 	student_count[student] += 1
-				# else:
-				# 	student_count[student] = 1
 
 			for fee in self.student_fee_details:
 				student = fee.student_id

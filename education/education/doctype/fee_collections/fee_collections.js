@@ -144,11 +144,14 @@ frappe.ui.form.on("Fee Collections", {
             family_code: frm.doc.family_code,
           },
       callback: async function (r) {
-        if (r.message.length == 0) {
+        if (r.message.fees.length == 0) {
           frappe.throw(__("There are no outstanding fee found in the system"));
         }
 
-        processFees(frm, r.message);
+        processFees(frm, r.message.fees);
+        frm.doc.net_total = r.message.gross_amount;
+        frm.doc.discount = r.message.discount;
+        frm.doc.net_total_a_d = r.message.net_total_a_d;
       },
     });
   },
@@ -164,7 +167,10 @@ frappe.ui.form.on("Fee Collections", {
             family_code: frm.doc.family_code,
           },
       callback: function (r) {
-        processFees(frm, r.message);
+        processFees(frm, r.message.fees);
+        frm.doc.net_total = r.message.gross_amount;
+        frm.doc.discount = r.message.discount;
+        frm.doc.net_total_a_d = r.message.net_total_a_d;
       },
     });
   },
@@ -180,7 +186,10 @@ frappe.ui.form.on("Fee Collections", {
             family_code: frm.doc.family_code,
           },
       callback: function (r) {
-        processFees(frm, r.message);
+        processFees(frm, r.message.fees);
+        frm.doc.net_total = r.message.gross_amount;
+        frm.doc.discount = r.message.discount;
+        frm.doc.net_total_a_d = r.message.net_total_a_d;
       },
     });
   },
@@ -215,7 +224,7 @@ frappe.ui.form.on("Fee Collections", {
     frm.set_value("total_tax_a", total_tax_a);
     frm.set_value("grand_total_b_d", grand_total_b_d);
     frm.doc.fee_collection_payment[0].amount = frm.doc.grand_total;
-    frm.refresh_field("fee_collection_payment")
+    frm.refresh_field("fee_collection_payment");
   },
 });
 
@@ -241,33 +250,7 @@ async function processFees(frm, array) {
       row.allocated_amount = fee.outstanding_amount;
       row.month = fee.posting_date;
       row.is_return = fee.is_return;
-      try {
-        const response = await frappe.call({
-          method: "education.education.api.get_fee_doc",
-          args: {
-            name: fee.name,
-          },
-        });
-
-        if (response.message && response.message.components) {
-          const compoArray = [];
-          frm.doc.net_total = 0;
-          frm.doc.discount = 0;
-          frm.doc.net_total_a_d = 0;
-          for (let i = 0; i < response.message.components.length; i++) {
-            const ele = response.message.components[i];
-            compoArray.push(ele.fees_category);
-            let dis_amount = ele.gross_amount - ele.amount;
-            frm.doc.net_total += ele.gross_amount;
-            frm.doc.discount += dis_amount;
-            frm.doc.net_total_a_d += ele.amount;
-          }
-          row.components = compoArray.join(", ");
-        }
-      } catch (error) {
-        console.error("Error fetching fee details:", error);
-        // Handle the error gracefully (e.g., log it, set a default value, etc.)
-      }
+      row.components = fee.components;
     }
   }
   frm.refresh_field("net_total");
@@ -275,7 +258,6 @@ async function processFees(frm, array) {
   frm.refresh_field("net_total_a_d");
   refresh_field("student_fee_details");
   frm.trigger("student_fee_details");
-  console.log("testong");
 }
 
 frappe.ui.form.on("Student Fee Details", {

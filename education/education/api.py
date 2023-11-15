@@ -546,7 +546,24 @@ def get_advanced_student_fee(student = None, family_code = None):
 		frappe.throw(_("There are some outstanding fees, please try to collect the outstanding fees first"))
 	elif len(student_fee) == 0:
 		frappe.throw(_("There are no advance fee found in the system"))
-	return student_fee	
+
+	for fee in student_fee:
+		compoArray = []
+		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
+		net_total = 0
+		discount = 0
+		net_total_a_d = 0
+		for ele in components:
+			compoArray.append(ele.fees_category)
+			dis_amount = ele.gross_amount - ele.amount
+			net_total += ele.gross_amount
+			discount += dis_amount
+			net_total_a_d += ele.amount
+
+		fee['components'] = ", ".join(compoArray)
+
+
+	return {'fees': student_fee,  'net_total': net_total, 'discount': discount, 'net_total_a_d': net_total_a_d,}
 
 @frappe.whitelist()
 def get_outstanding_student_fee(student = None, family_code = None):
@@ -562,7 +579,23 @@ def get_outstanding_student_fee(student = None, family_code = None):
 		["posting_date", "<=", today()],
 	], fields=["*"])
 	
-	return student_fee
+	for fee in student_fee:
+		compoArray = []
+		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
+		net_total = 0
+		discount = 0
+		net_total_a_d = 0
+		for ele in components:
+			compoArray.append(ele.fees_category)
+			dis_amount = ele.gross_amount - ele.amount
+			net_total += ele.gross_amount
+			discount += dis_amount
+			net_total_a_d += ele.amount
+
+		fee['components'] = ", ".join(compoArray)
+
+
+	return {'fees': student_fee,  'net_total': net_total, 'discount': discount, 'net_total_a_d': net_total_a_d,}
 
 @frappe.whitelist()
 def get_student_fee_details(student = None, family_code = None):
@@ -578,8 +611,23 @@ def get_student_fee_details(student = None, family_code = None):
 	], fields=["*"])
 	if len(student_fee) == 0:
 		frappe.throw(_("There are no fee found in the system"))
-		
-	return student_fee
+	for fee in student_fee:
+		compoArray = []
+		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
+		net_total = 0
+		discount = 0
+		net_total_a_d = 0
+		for ele in components:
+			compoArray.append(ele.fees_category)
+			dis_amount = ele.gross_amount - ele.amount
+			net_total += ele.gross_amount
+			discount += dis_amount
+			net_total_a_d += ele.amount
+
+		fee['components'] = ", ".join(compoArray)
+
+
+	return {'fees': student_fee,  'net_total': net_total, 'discount': discount, 'net_total_a_d': net_total_a_d,}
 
 @frappe.whitelist()
 def get_student_fee_details_not_submit(student = None, family_code = None):
