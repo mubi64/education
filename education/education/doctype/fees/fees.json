@@ -417,8 +417,7 @@
    "fieldtype": "Select",
    "label": "Discount Type",
    "options": "\nPercentage\nAmount",
-   "print_hide": 1,
-   "read_only": 1
+   "print_hide": 1
   },
   {
    "depends_on": "eval:doc.discount_type == \"Percentage\"",
@@ -525,7 +524,7 @@
  "is_published_field": "published",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-11-14 09:57:12.455500",
+ "modified": "2023-11-16 08:43:10.603297",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",

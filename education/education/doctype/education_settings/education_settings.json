@@ -35,7 +35,9 @@
   "column_break_c2oex",
   "discount_expense_account",
   "section_break_iujvm",
-  "discount_slabs"
+  "discount_slabs",
+  "section_break_ufzox",
+  "applicable_student_categories"
  ],
  "fields": [
   {
@@ -122,7 +124,7 @@
   },
   {
    "fieldname": "fees_settings_section",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Fees Settings"
   },
   {
@@ -175,7 +177,7 @@
   },
   {
    "fieldname": "advance_fee_discount_setting_section",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Advance Fee Discount Setting"
   },
   {
@@ -215,11 +217,22 @@
    "depends_on": "eval:doc.enable_discount == 1",
    "fieldname": "section_break_fn7sn",
    "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.enable_discount == 1",
+   "fieldname": "section_break_ufzox",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "applicable_student_categories",
+   "fieldtype": "Table",
+   "label": "Applicable Student Categories",
+   "options": "Applicable Student Categories"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-10-20 08:56:10.341942",
+ "modified": "2023-11-16 09:08:26.610889",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Education Settings",
