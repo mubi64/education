@@ -66,12 +66,12 @@ class Fees(AccountsController, WebsiteGenerator):
                         component.discount_type = discount.discount_type
                         if discount.discount_type == "Percentage":
                             component.percentage = discount.percentage
-                            percent = component.percentage / 100
-                            discount_amount = percent * component.gross_amount
-                            component.amount = component.gross_amount - discount_amount
+                            percent = flt(component.percentage) / 100
+                            discount_amount = flt(percent) * flt(component.gross_amount)
+                            component.amount = flt(component.gross_amount) - flt(discount_amount)
                         elif discount.discount_type == "Amount":
                             component.discount_amount = discount.amount
-                            component.amount = component.gross_amount - component.discount_amount
+                            component.amount = flt(component.gross_amount) - flt(component.discount_amount)
 
     def append_transportation(self):
         fee_student = frappe.get_doc('Student', self.student)

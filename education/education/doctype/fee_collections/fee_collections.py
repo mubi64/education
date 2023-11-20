@@ -37,7 +37,7 @@ class FeeCollections(Document):
 					elif self.discount_type != "":
 						frappe.throw(_("Not allowed to change any fields after submission at row  " + str(i +1)))
 			
-			self.advance_fee_dicount()
+			self.advance_fee_discount()
 		self.update_student_table()
 		
 	def update_student_table(self):
@@ -94,135 +94,135 @@ class FeeCollections(Document):
 			self.grand_total_b_d += fee.amount_before_discount
 			self.total_d_a += fee.total_discount_amount
 	
-	def advance_fee_discount(self):
-		edu_settings = frappe.get_doc("Education Settings")
-
-		if edu_settings.enable_discount != 1:
-			return
-
-		student_count = {}
-		allowed_categories = [category.student_category for category in edu_settings.applicable_student_categories]
-		student_ids = [fee.student_id for fee in self.student_fee_details]
-
-		students = frappe.get_all("Student", filters=[
-			["name", "in", student_ids],
-			["student_category", "in", allowed_categories]
-		])
-		allowed_student_names = {student["name"] for student in students}
-
-		apply_discount_fees = [fee for fee in self.student_fee_details if fee.student_id in allowed_student_names]
-
-		total_discount_amount = 0
-		for fee in apply_discount_fees:
-			student = fee.student_id
-			student_count[student] = student_count.get(student, 0) + 1
-
-		for fee in apply_discount_fees:
-			student = fee.student_id
-			discount_slab = next((slab for slab in edu_settings.discount_slabs if
-								slab.from_month <= student_count[student] <= slab.to_month
-								and str(fee.due_date) >= now()
-								and edu_settings.apply_discount_on in fee.components), None)
-
-			if discount_slab:
-				fee_doc = frappe.get_doc("Fees", fee.fees)
-				fee_doc.discount_type = discount_slab.discount_type
-
-				if discount_slab.discount_type == "Percentage":
-					fee_doc.percentage = discount_slab.percentage
-				elif discount_slab.discount_type == "Amount":
-					fee_doc.discount_amount = discount_slab.amount
-
-				fee_doc.fee_expense_account = edu_settings.discount_expense_account
-				fee_doc.save()
-				total_discount_amount += fee_doc.total_discount_amount
-
-		for fee in apply_discount_fees:
-			fee_doc = frappe.get_doc("Fees", fee.fees)
-			if fee_doc.discount_type != "":
-				fee_doc.discount_type = ""
-				fee_doc.percentage = 0
-				fee_doc.discount_amount = 0
-				fee_doc.save()
-
-		remove_discount_fees = [item for item in self.student_fee_details if item not in apply_discount_fees]
-
-		for fee in remove_discount_fees:
-			fee_doc = frappe.get_doc("Fees", fee.fees)
-			if fee_doc.discount_type != "":
-				fee_doc.discount_type = ""
-				fee_doc.percentage = 0
-				fee_doc.discount_amount = 0
-				fee_doc.save()
-
-		self.total_d_a = total_discount_amount
-
-	
-	# def advance_fee_dicount(self):
-	# 	advance_fee = []
+	# def advance_fee_discount(self):
 	# 	edu_settings = frappe.get_doc("Education Settings")
 
-	# 	if edu_settings.enable_discount == 1:
-	# 		student_count = {}
-	# 		allowed_categories = [category.student_category for category in edu_settings.applicable_student_categories]
-	# 		student_ids = [fee.student_id for fee in self.student_fee_details]
+	# 	if edu_settings.enable_discount != 1:
+	# 		return
 
-	# 		students = frappe.get_all("Student", filters=[
-	# 			["name", "in", student_ids],
-	# 			["student_category", "in", allowed_categories]
-	# 		])
-	# 		allowed_student_names = {student["name"] for student in students}
+	# 	student_count = {}
+	# 	allowed_categories = [category.student_category for category in edu_settings.applicable_student_categories]
+	# 	student_ids = [fee.student_id for fee in self.student_fee_details]
 
-	# 		apply_discount_fees = [fee for fee in self.student_fee_details if fee.student_id in allowed_student_names]
+	# 	students = frappe.get_all("Student", filters=[
+	# 		["name", "in", student_ids],
+	# 		["student_category", "in", allowed_categories]
+	# 	])
+	# 	allowed_student_names = {student["name"] for student in students}
+
+	# 	apply_discount_fees = [fee for fee in self.student_fee_details if fee.student_id in allowed_student_names]
+
+	# 	total_discount_amount = 0
+	# 	for fee in apply_discount_fees:
+	# 		student = fee.student_id
+	# 		student_count[student] = student_count.get(student, 0) + 1
+
+	# 	for fee in apply_discount_fees:
+	# 		student = fee.student_id
+	# 		discount_slab = next((slab for slab in edu_settings.discount_slabs if
+	# 							slab.from_month <= student_count[student] <= slab.to_month
+	# 							and str(fee.due_date) >= now()
+	# 							and edu_settings.apply_discount_on in fee.components), None)
+
+	# 		if discount_slab:
+	# 			fee_doc = frappe.get_doc("Fees", fee.fees)
+	# 			fee_doc.discount_type = discount_slab.discount_type
+
+	# 			if discount_slab.discount_type == "Percentage":
+	# 				fee_doc.percentage = discount_slab.percentage
+	# 			elif discount_slab.discount_type == "Amount":
+	# 				fee_doc.discount_amount = discount_slab.amount
+
+	# 			fee_doc.fee_expense_account = edu_settings.discount_expense_account
+	# 			fee_doc.save()
+	# 			total_discount_amount += fee_doc.total_discount_amount
+
+	# 	for fee in apply_discount_fees:
+	# 		fee_doc = frappe.get_doc("Fees", fee.fees)
+	# 		if fee_doc.discount_type != "":
+	# 			fee_doc.discount_type = ""
+	# 			fee_doc.percentage = 0
+	# 			fee_doc.discount_amount = 0
+	# 			fee_doc.save()
+
+	# 	remove_discount_fees = [item for item in self.student_fee_details if item not in apply_discount_fees]
+
+	# 	for fee in remove_discount_fees:
+	# 		fee_doc = frappe.get_doc("Fees", fee.fees)
+	# 		if fee_doc.discount_type != "":
+	# 			fee_doc.discount_type = ""
+	# 			fee_doc.percentage = 0
+	# 			fee_doc.discount_amount = 0
+	# 			fee_doc.save()
+
+	# 	self.total_d_a = total_discount_amount
+
+	
+	def advance_fee_discount(self):
+		advance_fee = []
+		edu_settings = frappe.get_doc("Education Settings")
+
+		if edu_settings.enable_discount == 1:
+			student_count = {}
+			allowed_categories = [category.student_category for category in edu_settings.applicable_student_categories]
+			student_ids = [fee.student_id for fee in self.student_fee_details]
+
+			students = frappe.get_all("Student", filters=[
+				["name", "in", student_ids],
+				["student_category", "in", allowed_categories]
+			])
+			allowed_student_names = {student["name"] for student in students}
+
+			apply_discount_fees = [fee for fee in self.student_fee_details if fee.student_id in allowed_student_names]
 			
-	# 		total_discount_amount = 0
-	# 		for fee in apply_discount_fees:
-	# 			student = fee.student_id
-	# 			student_count[student] = student_count.get(student,0) + 1
+			total_discount_amount = 0
+			for fee in apply_discount_fees:
+				student = fee.student_id
+				student_count[student] = student_count.get(student,0) + 1
 
-	# 		for fee in apply_discount_fees:
-	# 			# Check eligibility for discount
-	# 			for dis_slab in edu_settings.discount_slabs:
-	# 				due_date_condition = str(fee.due_date) >= now()
-	# 				discount_component_condition = edu_settings.apply_discount_on in fee.components
+			for fee in apply_discount_fees:
+				# Check eligibility for discount
+				for dis_slab in edu_settings.discount_slabs:
+					due_date_condition = str(fee.due_date) >= now()
+					discount_component_condition = edu_settings.apply_discount_on in fee.components
 					
-	# 				if (dis_slab.from_month <= student_count[student] <= dis_slab.to_month 
-	# 	 				and due_date_condition and discount_component_condition):
-	# 					advance_fee.append(fee)
+					if (dis_slab.from_month <= student_count[student] <= dis_slab.to_month 
+		 				and due_date_condition and discount_component_condition):
+						advance_fee.append(fee)
 		
-	# 		for dis_slab in edu_settings.discount_slabs:
-	# 			if dis_slab.from_month <= len(advance_fee) <= dis_slab.to_month:
-	# 				for adv_fee in advance_fee:
-	# 					fee = frappe.get_doc("Fees", adv_fee.fees)
-	# 					fee.discount_type = dis_slab.discount_type
+			for dis_slab in edu_settings.discount_slabs:
+				if dis_slab.from_month <= len(advance_fee) <= dis_slab.to_month:
+					for adv_fee in advance_fee:
+						fee = frappe.get_doc("Fees", adv_fee.fees)
+						fee.discount_type = dis_slab.discount_type
 
-	# 					if dis_slab.discount_type == "Percentage":
-	# 						fee.percentage = dis_slab.percentage
-	# 					elif dis_slab.discount_type == "Amount":
-	# 						fee.discount_amount = dis_slab.amount
+						if dis_slab.discount_type == "Percentage":
+							fee.percentage = dis_slab.percentage
+						elif dis_slab.discount_type == "Amount":
+							fee.discount_amount = dis_slab.amount
 
-	# 					fee.fee_expense_account = edu_settings.discount_expense_account
-	# 					fee.save()
-	# 					total_discount_amount += fee.total_discount_amount
-	# 			else:
-	# 				for adv_fee in advance_fee:
-	# 					fee = frappe.get_doc("Fees", adv_fee.fees)
-	# 					if fee.discount_type != "":
-	# 						fee.discount_type = ""
-	# 						fee.percentage = 0,
-	# 						fee.discount_amount = 0
-	# 						fee.save()
+						fee.fee_expense_account = edu_settings.discount_expense_account
+						fee.save()
+						total_discount_amount += fee.total_discount_amount
+				else:
+					for adv_fee in advance_fee:
+						fee = frappe.get_doc("Fees", adv_fee.fees)
+						if fee.discount_type != "":
+							fee.discount_type = ""
+							fee.percentage = 0,
+							fee.discount_amount = 0
+							fee.save()
 				
-	# 			remove_discount_fees = [item for item in self.student_fee_details if item not in advance_fee]
+				remove_discount_fees = [item for item in self.student_fee_details if item not in advance_fee]
 
-	# 			for adv_fee in remove_discount_fees:
-	# 				fee = frappe.get_doc("Fees", adv_fee.fees)
-	# 				if fee.discount_type != "":
-	# 					fee.discount_type = ""
-	# 					fee.percentage = 0,
-	# 					fee.discount_amount = 0
-	# 					fee.save()
-	# 		self.total_d_a = total_discount_amount
+				for adv_fee in remove_discount_fees:
+					fee = frappe.get_doc("Fees", adv_fee.fees)
+					if fee.discount_type != "":
+						fee.discount_type = ""
+						fee.percentage = 0,
+						fee.discount_amount = 0
+						fee.save()
+			self.total_d_a = total_discount_amount
 
 
 	def on_submit(self):

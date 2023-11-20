@@ -542,17 +542,20 @@ def get_advanced_student_fee(student = None, family_code = None):
 		["is_return", "=", 0],
 		["posting_date", ">", today()],
 	], fields=["*"])
-	if len(outstanding_fees) > 0 and len(student_fee) > 0:
+	if len(outstanding_fees.get('fees')) > 0 and len(student_fee) > 0:
 		frappe.throw(_("There are some outstanding fees, please try to collect the outstanding fees first"))
 	elif len(student_fee) == 0:
 		frappe.throw(_("There are no advance fee found in the system"))
 
+	net_total = 0
+	discount = 0
+	net_total_a_d = 0
 	for fee in student_fee:
 		compoArray = []
 		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
-		net_total = 0
 		discount = 0
 		net_total_a_d = 0
+		net_total = 0
 		for ele in components:
 			compoArray.append(ele.fees_category)
 			dis_amount = ele.gross_amount - ele.amount
@@ -579,11 +582,14 @@ def get_outstanding_student_fee(student = None, family_code = None):
 		["posting_date", "<=", today()],
 	], fields=["*"])
 	
+	net_total = 0
+	discount = 0
+	net_total_a_d = 0
 	for fee in student_fee:
 		compoArray = []
 		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
-		net_total = 0
 		discount = 0
+		net_total = 0
 		net_total_a_d = 0
 		for ele in components:
 			compoArray.append(ele.fees_category)
@@ -611,11 +617,15 @@ def get_student_fee_details(student = None, family_code = None):
 	], fields=["*"])
 	if len(student_fee) == 0:
 		frappe.throw(_("There are no fee found in the system"))
+
+	net_total = 0
+	discount = 0
+	net_total_a_d = 0
 	for fee in student_fee:
 		compoArray = []
 		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
-		net_total = 0
 		discount = 0
+		net_total = 0
 		net_total_a_d = 0
 		for ele in components:
 			compoArray.append(ele.fees_category)
