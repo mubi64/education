@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 from functools import reduce
+from education.education.utils import round_val
 
 import frappe
 from frappe import _, scrub
@@ -93,69 +94,6 @@ class FeeCollections(Document):
 			self.total_tax_a += fee.total_taxes_and_charges
 			self.grand_total_b_d += fee.amount_before_discount
 			self.total_d_a += fee.total_discount_amount
-	
-	# def advance_fee_discount(self):
-	# 	edu_settings = frappe.get_doc("Education Settings")
-
-	# 	if edu_settings.enable_discount != 1:
-	# 		return
-
-	# 	student_count = {}
-	# 	allowed_categories = [category.student_category for category in edu_settings.applicable_student_categories]
-	# 	student_ids = [fee.student_id for fee in self.student_fee_details]
-
-	# 	students = frappe.get_all("Student", filters=[
-	# 		["name", "in", student_ids],
-	# 		["student_category", "in", allowed_categories]
-	# 	])
-	# 	allowed_student_names = {student["name"] for student in students}
-
-	# 	apply_discount_fees = [fee for fee in self.student_fee_details if fee.student_id in allowed_student_names]
-
-	# 	total_discount_amount = 0
-	# 	for fee in apply_discount_fees:
-	# 		student = fee.student_id
-	# 		student_count[student] = student_count.get(student, 0) + 1
-
-	# 	for fee in apply_discount_fees:
-	# 		student = fee.student_id
-	# 		discount_slab = next((slab for slab in edu_settings.discount_slabs if
-	# 							slab.from_month <= student_count[student] <= slab.to_month
-	# 							and str(fee.due_date) >= now()
-	# 							and edu_settings.apply_discount_on in fee.components), None)
-
-	# 		if discount_slab:
-	# 			fee_doc = frappe.get_doc("Fees", fee.fees)
-	# 			fee_doc.discount_type = discount_slab.discount_type
-
-	# 			if discount_slab.discount_type == "Percentage":
-	# 				fee_doc.percentage = discount_slab.percentage
-	# 			elif discount_slab.discount_type == "Amount":
-	# 				fee_doc.discount_amount = discount_slab.amount
-
-	# 			fee_doc.fee_expense_account = edu_settings.discount_expense_account
-	# 			fee_doc.save()
-	# 			total_discount_amount += fee_doc.total_discount_amount
-
-	# 	for fee in apply_discount_fees:
-	# 		fee_doc = frappe.get_doc("Fees", fee.fees)
-	# 		if fee_doc.discount_type != "":
-	# 			fee_doc.discount_type = ""
-	# 			fee_doc.percentage = 0
-	# 			fee_doc.discount_amount = 0
-	# 			fee_doc.save()
-
-	# 	remove_discount_fees = [item for item in self.student_fee_details if item not in apply_discount_fees]
-
-	# 	for fee in remove_discount_fees:
-	# 		fee_doc = frappe.get_doc("Fees", fee.fees)
-	# 		if fee_doc.discount_type != "":
-	# 			fee_doc.discount_type = ""
-	# 			fee_doc.percentage = 0
-	# 			fee_doc.discount_amount = 0
-	# 			fee_doc.save()
-
-	# 	self.total_d_a = total_discount_amount
 
 	
 	def advance_fee_discount(self):
@@ -253,15 +191,16 @@ class FeeCollections(Document):
 					
 					temp_dict = {
 						"name": item.student_id,
-						"amount": outst_amount, # item.outstanding_amount,
+						"amount": round_val(outst_amount, 3), # item.outstanding_amount,
 						"fee": item.fees
 					}
 					self.mode_of_payment = row.mode_of_payment
 					values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
 					values.reference_no = self.reference_no
 					values.reference_date = self.reference_date
+					
 					for ref in values.references:
-						ref.allocated_amount = round(outst_amount, 3)
+						ref.allocated_amount = ref.outstanding_amount
 
 					values.insert()
 					values.submit()
@@ -271,7 +210,7 @@ class FeeCollections(Document):
 		amount_in_table = sum(row.amount for row in self.fee_collection_payment)
 		amount_in_fee_table = sum(row.total_amount for row in self.student_fee_details)
 
-		if round(amount_in_table, 3) != round(amount_in_fee_table, 3):
+		if round_val(amount_in_table, 3) != round_val(amount_in_fee_table, 3):
 			frappe.throw(_("Amount must be equal to grand total"))
 
 	def create_journal_entry(self, fee_doc):

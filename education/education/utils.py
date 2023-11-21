@@ -1,5 +1,6 @@
 # Copyright (c) 2015, Frappe Technologies and contributors
 
+import math
 import frappe
 from frappe import _
 
@@ -432,3 +433,8 @@ def check_quiz_completion(quiz, enrollment_name):
 		if result == "Pass":
 			status = True
 	return status, score, result, time_taken
+
+0
+def round_val(n, decimals=0):
+	multiplier = 10 ** decimals
+	return math.floor(n*multiplier + 0.5)/multiplier
