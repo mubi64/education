@@ -178,7 +178,6 @@ class FeeCollections(Document):
 					fee_doc.save()
 					self.create_journal_entry(fee_doc)
 
-
 		else:
 			for item in self.student_fee_details:
 				current_fee = frappe.get_doc("Fees", item.fees)
@@ -268,15 +267,6 @@ class FeeCollections(Document):
 		journal_entry.insert()
 		journal_entry.submit()
 
-	def create_payment_entry(self, item):
-		amount_percentage = flt(item.amount) / flt(self.grand_total) * 100
-		outst_amount = flt(item.outstanding_amount) / 100 * amount_percentage
-
-		temp_dict = {
-						"name": item.student_id,
-						"amount": outst_amount, # item.outstanding_amount,
-						"fee": item.fees
-					}
 
 	def get_payment_entry(
 		self,
