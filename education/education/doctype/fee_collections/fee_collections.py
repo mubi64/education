@@ -264,7 +264,7 @@ class FeeCollections(Document):
 				"reference_type": "Fees",
 				"reference_name": fee_doc.name
 			})
-		print(journal_entry.posting_date, "test \n\n\n\n\n\n\n\n\n\n\n\n\n")
+
 		journal_entry.insert()
 		journal_entry.submit()
 
