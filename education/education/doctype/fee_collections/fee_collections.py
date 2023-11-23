@@ -176,7 +176,7 @@ class FeeCollections(Document):
 				if fee_doc.outstanding_amount == 0:
 					fee_doc.is_return = 1
 					fee_doc.save()
-					self.create_journal_entry()
+					self.create_journal_entry(fee_doc)
 
 
 		else:
@@ -222,6 +222,7 @@ class FeeCollections(Document):
 		journal_entry = frappe.get_doc({
 			"doctype": "Journal Entry",
 			"posting_date": now(),
+			# "title": fee_doc.name,
 			"accounts": [],
 		})
 
@@ -263,7 +264,7 @@ class FeeCollections(Document):
 				"reference_type": "Fees",
 				"reference_name": fee_doc.name
 			})
-		
+		print(journal_entry.posting_date, "test \n\n\n\n\n\n\n\n\n\n\n\n\n")
 		journal_entry.insert()
 		journal_entry.submit()
 
