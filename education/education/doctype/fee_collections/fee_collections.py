@@ -121,15 +121,16 @@ class FeeCollections(Document):
 
 			for fee in apply_discount_fees:
 				# Check eligibility for discount
-				student = fee.student_id
+				if str(fee.due_date) >= now():
+					student_id = fee.student_id
 
-				for dis_slab in edu_settings.discount_slabs:
-					due_date_condition = str(fee.due_date) >= now()
-					discount_component_condition = edu_settings.apply_discount_on in fee.components
-					
-					if (dis_slab.from_month <= student_count[student] <= dis_slab.to_month 
-		 				and due_date_condition and discount_component_condition):
-						advance_fee.append(fee)
+					for dis_slab in edu_settings.discount_slabs:
+						due_date_condition = str(fee.due_date) >= now()
+						discount_component_condition = edu_settings.apply_discount_on in fee.components
+						
+						if (dis_slab.from_month <= student_count[student_id] <= dis_slab.to_month 
+							and due_date_condition and discount_component_condition):
+							advance_fee.append(fee)
 
 			for dis_slab in edu_settings.discount_slabs:
 				if dis_slab.from_month <= len(advance_fee) <= dis_slab.to_month:
