@@ -122,7 +122,27 @@ class Fees(AccountsController, WebsiteGenerator):
             self.cost_center = accounts_details.cost_center
         if not self.student_email:
             self.student_email = self.get_student_emails()
+        if not self.taxes:
+            self.set_taxes()
 
+    def set_taxes(self):
+        if self.taxes_and_charges:
+            from education.education.api import get_fee_sales_charges
+
+            taxes_and_charges = get_fee_sales_charges(self.taxes_and_charges)
+            for charge in taxes_and_charges:
+                self.append("taxes",{
+                    "charge_type": charge.charge_type,
+                    "account_head": charge.account_head,
+                    "rate": charge.rate,
+                    "included_in_print_rate": charge.included_in_print_rate,
+                    "base_total": charge.base_total,
+                    "cost_center": charge.cost_center,
+                    "description": charge.description,
+                    "tax_amount": 0  # Placeholder value, will be calculated below
+                })
+
+    
     def calculate_total(self):
         """Calculates total amount."""
         tax_and_char = 0

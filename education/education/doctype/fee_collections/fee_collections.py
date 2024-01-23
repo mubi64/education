@@ -198,15 +198,15 @@ class FeeCollections(Document):
 						"fee": item.fees
 					}
 					self.mode_of_payment = row.mode_of_payment
-					values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
-					values.reference_no = self.reference_no
-					values.reference_date = self.reference_date
-					
-					for ref in values.references:
-						ref.allocated_amount = ref.outstanding_amount
-
-					values.insert()
-					values.submit()
+				values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
+				values.reference_no = self.reference_no
+				values.reference_date = self.reference_date
+				
+				for ref in values.references:
+					ref.allocated_amount = ref.outstanding_amount
+					print(ref.allocated_amount, ref.outstanding_amount, ref.reference_name, "paid_from \n\n\n ")
+				values.insert()
+				values.submit()
 			
 
 	def validate_amounts(self):
@@ -335,6 +335,7 @@ class FeeCollections(Document):
 		pe.ensure_supplier_is_not_blocked()
 
 		pe.paid_from = party_account if payment_type == "Receive" else bank.account
+		# print(party_account, payment_type, bank.account, pe.paid_from, "Check Account \n\n\n\n\n\n\n\n\n")
 		pe.paid_to = party_account if payment_type == "Pay" else bank.account
 		pe.paid_from_account_currency = (
 			party_account_currency if payment_type == "Receive" else bank.account_currency

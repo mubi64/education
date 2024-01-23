@@ -155,6 +155,7 @@
    "label": "Student Details"
   },
   {
+   "fetch_from": "student.custom_program_enrollment",
    "fieldname": "program_enrollment",
    "fieldtype": "Link",
    "label": "Program Enrollment",
@@ -170,6 +171,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "student.custom_student_batch",
    "fieldname": "student_batch",
    "fieldtype": "Link",
    "label": "Student Batch",
@@ -178,6 +180,7 @@
   },
   {
    "allow_on_submit": 1,
+   "fetch_from": "student.student_email_id",
    "fieldname": "student_email",
    "fieldtype": "Data",
    "label": "Student Email",
@@ -189,12 +192,14 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": "student.student_category",
    "fieldname": "student_category",
    "fieldtype": "Link",
    "label": "Student Category",
    "options": "Student Category"
   },
   {
+   "fetch_from": ".admission_registration_id",
    "fieldname": "academic_term",
    "fieldtype": "Link",
    "label": "Academic Term",
@@ -311,6 +316,7 @@
    "print_hide": 1
   },
   {
+   "fetch_from": "fee_structure.receivable_account",
    "fieldname": "receivable_account",
    "fieldtype": "Link",
    "label": "Receivable Account",
@@ -319,6 +325,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "fee_structure.income_account",
    "fieldname": "income_account",
    "fieldtype": "Link",
    "label": "Income Account",
@@ -525,7 +532,7 @@
  "is_published_field": "published",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-11-23 08:47:46.173668",
+ "modified": "2024-01-22 17:30:08.271462",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fees",

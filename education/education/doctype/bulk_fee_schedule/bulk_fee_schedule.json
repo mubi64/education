@@ -1,0 +1,137 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "EDU-FEE-.{{student_name}}.-.#####",
+ "creation": "2024-01-22 14:10:41.688725",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "student",
+  "student_name",
+  "fee_structure",
+  "student_category",
+  "column_break_fuqw",
+  "start_from",
+  "period_day",
+  "program",
+  "show_months",
+  "section_break_ytio",
+  "components",
+  "schedule_month",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student",
+   "options": "Student",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "student.first_name",
+   "fieldname": "student_name",
+   "fieldtype": "Data",
+   "label": "Student Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fuqw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "start_from",
+   "fieldtype": "Date",
+   "label": "Start From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_ytio",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "schedule_month",
+   "fieldtype": "Table",
+   "label": "Schedule Month",
+   "options": "Schedule Month"
+  },
+  {
+   "fieldname": "fee_structure",
+   "fieldtype": "Link",
+   "label": "Fee Structure",
+   "options": "Fee Structure"
+  },
+  {
+   "fieldname": "components",
+   "fieldtype": "Table",
+   "label": "Components",
+   "options": "Fee Component"
+  },
+  {
+   "fetch_from": "fee_structure.student_category",
+   "fieldname": "student_category",
+   "fieldtype": "Link",
+   "label": "Student Category",
+   "options": "Student Category",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "fee_structure.program",
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "label": "Program",
+   "options": "Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Bulk Fee Schedule",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "show_months",
+   "fieldtype": "Button",
+   "label": "Show Months"
+  },
+  {
+   "default": "0",
+   "fieldname": "period_day",
+   "fieldtype": "Int",
+   "label": "Due Date Period (Day)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-01-22 17:33:21.023614",
+ "modified_by": "Administrator",
+ "module": "Education",
+ "name": "Bulk Fee Schedule",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -500,7 +500,7 @@ def get_current_enrollment(student, academic_year=None):
 		(student, current_academic_year),
 		as_dict=1,
 	)
-	print(student, "name", "testing **************************")
+	# print(student, "name", "testing **************************")
 
 	if program_enrollment_list:
 		return program_enrollment_list[0]
