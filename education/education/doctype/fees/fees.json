@@ -199,7 +199,6 @@
    "options": "Student Category"
   },
   {
-   "fetch_from": ".admission_registration_id",
    "fieldname": "academic_term",
    "fieldtype": "Link",
    "label": "Academic Term",
