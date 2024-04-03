@@ -16,7 +16,27 @@ class BulkFeeSchedule(Document):
 				"due_date": fee.due_date,
 				"fee_structure": self.fee_structure,
 				"program": self.program,
+				"bulk_fee_schedule": self.name
 			})
+			if self.taxes_and_charges:
+				fee_doc.taxes_and_charges = self.taxes_and_charges
+
+			if self.receivable_account:
+				fee_doc.receivable_account = self.receivable_account
+
+			if self.income_account:
+				fee_doc.income_account = self.income_account
+			
+			for tax in self.taxes:
+				fee_doc.append("taxes", {
+					"charge_type": tax.charge_type,
+					"description": tax.description,
+					"account_head": tax.account_head,
+					"row_id": tax.row_id,
+					"included_in_print_rate": tax.included_in_print_rate,
+					"rate": tax.rate
+				})
+
 			for com in self.components:
 				fee_doc.append("components", {
 					"fees_category": com.fees_category,

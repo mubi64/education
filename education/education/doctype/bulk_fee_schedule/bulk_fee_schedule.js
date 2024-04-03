@@ -4,7 +4,7 @@
 frappe.ui.form.on("Bulk Fee Schedule", {
   refresh(frm) {},
   fee_structure: function (frm) {
-    frm.set_value("components", [])
+    frm.set_value("components", []);
     if (frm.doc.fee_structure) {
       frappe.call({
         method: "education.education.api.get_fee_components",
@@ -31,8 +31,40 @@ frappe.ui.form.on("Bulk Fee Schedule", {
     }
   },
 
+  taxes_and_charges: function (frm) {
+    if (frm.doc.taxes_and_charges) {
+      frm.set_value("taxes", "");
+      frappe.call({
+        method: "education.education.api.get_fee_sales_charges",
+        args: {
+          taxes_and_charges: frm.doc.taxes_and_charges,
+        },
+        callback: function (r) {
+          if (r.message) {
+            $.each(r.message, function (i, d) {
+              var row = frappe.model.add_child(
+                frm.doc,
+                "Sales Taxes and Charges",
+                "taxes"
+              );
+              row.charge_type = d.charge_type;
+              row.account_head = d.account_head;
+              row.rate = d.rate;
+              row.included_in_print_rate = d.included_in_print_rate;
+              row.base_total = d.base_total;
+              row.cost_center = d.cost_center;
+              row.description = d.description;
+            });
+          }
+          refresh_field("taxes");
+        },
+      });
+    }
+  },
+
   show_months: function (frm) {
     // Array of month names
+    frm.set_value("schedule_month", "");
     var months = [
       "January",
       "February",
@@ -49,7 +81,7 @@ frappe.ui.form.on("Bulk Fee Schedule", {
     ];
 
     // Iterate over months and add rows to the child table
-    for (var i = 0; i < months.length; i++) {
+    for (var i = 0; i < frm.doc.nom; i++) {
       var row = frappe.model.add_child(
         frm.doc,
         "schedule_month",

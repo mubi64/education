@@ -13,12 +13,20 @@
   "column_break_fuqw",
   "start_from",
   "period_day",
+  "nom",
   "program",
   "show_months",
   "section_break_ytio",
   "components",
   "schedule_month",
-  "amended_from"
+  "accounting_tab",
+  "receivable_account",
+  "column_break_tna8",
+  "income_account",
+  "amended_from",
+  "taxes_and_charges_tab",
+  "taxes_and_charges",
+  "taxes"
  ],
  "fields": [
   {
@@ -78,11 +86,49 @@
    "read_only": 1
   },
   {
-   "fetch_from": "fee_structure.program",
+   "fetch_from": "student.current_program_enrollment",
    "fieldname": "program",
    "fieldtype": "Link",
    "label": "Program",
    "options": "Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "show_months",
+   "fieldtype": "Button",
+   "label": "Show Months"
+  },
+  {
+   "default": "0",
+   "fieldname": "period_day",
+   "fieldtype": "Int",
+   "label": "Due Date Period (Day)"
+  },
+  {
+   "fieldname": "accounting_tab",
+   "fieldtype": "Tab Break",
+   "label": "Accounting"
+  },
+  {
+   "fetch_from": "fee_structure.receivable_account",
+   "fetch_if_empty": 1,
+   "fieldname": "receivable_account",
+   "fieldtype": "Link",
+   "label": "Receivable Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_tna8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "fee_structure.income_account",
+   "fetch_if_empty": 1,
+   "fieldname": "income_account",
+   "fieldtype": "Link",
+   "label": "Income Account",
+   "options": "Account",
    "reqd": 1
   },
   {
@@ -96,21 +142,34 @@
    "search_index": 1
   },
   {
-   "fieldname": "show_months",
-   "fieldtype": "Button",
-   "label": "Show Months"
+   "fieldname": "taxes_and_charges_tab",
+   "fieldtype": "Tab Break",
+   "label": "Taxes and Charges"
+  },
+  {
+   "fieldname": "taxes_and_charges",
+   "fieldtype": "Link",
+   "label": "Sales Taxes and Charges Template",
+   "options": "Sales Taxes and Charges Template"
+  },
+  {
+   "fieldname": "taxes",
+   "fieldtype": "Table",
+   "label": "Sales Taxes and Charges",
+   "options": "Sales Taxes and Charges"
   },
   {
    "default": "0",
-   "fieldname": "period_day",
+   "fieldname": "nom",
    "fieldtype": "Int",
-   "label": "Due Date Period (Day)"
+   "label": "Number of Months",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-22 17:33:21.023614",
+ "modified": "2024-03-04 11:36:37.672563",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Bulk Fee Schedule",
