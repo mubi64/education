@@ -132,10 +132,12 @@ def generate_fee(fee_schedule):
     error = False
     total_records = sum([int(d.total_students) for d in doc.student_groups])
     created_records = 0
+    all_skipped = True
 
     if not total_records:
         frappe.throw(_("Please setup Students under Student Groups"))
 
+    
     for d in doc.student_groups:
         students = get_students(
             d.student_group, doc.academic_year, doc.academic_term, doc.student_category
@@ -148,6 +150,23 @@ def generate_fee(fee_schedule):
                     {"Fee Schedule": {"doctype": "Fees",
                                       "field_map": {"name": "Fee Schedule"}}},
                 )
+                # Check if fees already exist for this student and posting_date
+                existing_fees = frappe.get_list(
+                        "Fees",
+                        filters={
+                            "student": student.student,
+                            "posting_date": doc.posting_date,
+                            "docstatus": ["!=", 2],  # Exclude cancelled documents
+                            # Add more filters as needed
+                        },
+                        fields=["name"]
+                    )
+                    
+                if existing_fees:
+                    continue  # Skip creating fees if they already exist for this student
+                
+                all_skipped = False
+
 
                 taxes_amount = 0
                 rate = 0
@@ -182,8 +201,9 @@ def generate_fee(fee_schedule):
                     frappe.local.message_log and "\n\n".join(
                         frappe.local.message_log) or cstr(e)
                 )
-
-    if error:
+    if all_skipped:
+        frappe.db.set_value("Fee Schedule", fee_schedule, "fee_creation_status", "Failed")
+    elif error:
         frappe.db.rollback()
         frappe.db.set_value("Fee Schedule", fee_schedule,
                             "fee_creation_status", "Failed")
@@ -209,19 +229,21 @@ def get_students(
     if academic_term:
         conditions += " and pe.academic_term={}".format(
             frappe.db.escape(academic_term))
-
+    
+    # sg = frappe.get_doc("Student Group",student_group)
+    sg = frappe.db.get_value('Student Group', student_group, 'batch')
     students = frappe.db.sql(
         """
 		select pe.student, pe.student_name, pe.program, pe.student_batch_name
 		from `tabStudent Group Student` sgs, `tabProgram Enrollment` pe
 		where
 			pe.docstatus = 1 and pe.student = sgs.student and pe.academic_year = %s
-			and sgs.parent = %s and sgs.active = 1
+			and sgs.parent = %s and sgs.active = 1 and pe.student_batch_name = %s
 			{conditions}
 		""".format(
             conditions=conditions
         ),
-        (academic_year, student_group),
+        (academic_year, student_group,sg),
         as_dict=1,
     )
     return students
