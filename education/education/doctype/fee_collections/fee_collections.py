@@ -89,7 +89,7 @@ class FeeCollections(Document):
 
 			row.components = ", ".join(compoArray)
 			
-			self.grand_total += fee.grand_total
+			self.grand_total += fee.outstanding_amount
 			self.grand_total_b_tax += fee.grand_total_before_tax
 			self.total_tax_a += fee.total_taxes_and_charges
 			self.grand_total_b_d += fee.amount_before_discount
@@ -118,7 +118,6 @@ class FeeCollections(Document):
 				student = fee.student_id
 				if str(fee.due_date) >= now():
 					student_count[student] = student_count.get(student,0) + 1
-
 			for fee in apply_discount_fees:
 				# Check eligibility for discount
 				if str(fee.due_date) >= now():

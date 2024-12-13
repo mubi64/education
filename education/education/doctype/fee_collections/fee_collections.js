@@ -220,7 +220,7 @@ frappe.ui.form.on("Fee Collections", {
     let grand_total_b_d = 0;
     for (let i = 0; i < frm.doc.student_fee_details.length; i++) {
       const e = frm.doc.student_fee_details[i];
-      grand_total += e.total_amount;
+      grand_total += e.outstanding_amount;
       grand_total_b_tax += e.grand_total_before_tax;
       total_tax_a += e.total_taxes_and_charges;
       grand_total_b_d += e.amount_before_discount;
