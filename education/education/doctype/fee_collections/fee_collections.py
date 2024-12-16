@@ -203,14 +203,14 @@ class FeeCollections(Document):
 				
 				for ref in values.references:
 					ref.allocated_amount = ref.outstanding_amount
-					print(ref.allocated_amount, ref.outstanding_amount, ref.reference_name, "paid_from \n\n\n ")
+					# print(ref.allocated_amount, ref.outstanding_amount, ref.reference_name, "paid_from \n\n\n ")
 				values.insert()
 				values.submit()
 			
 
 	def validate_amounts(self):
 		amount_in_table = sum(row.amount for row in self.fee_collection_payment)
-		amount_in_fee_table = sum(row.total_amount for row in self.student_fee_details)
+		amount_in_fee_table = sum(row.outstanding_amount for row in self.student_fee_details)
 
 		if round_val(amount_in_table, 3) != round_val(amount_in_fee_table, 3):
 			frappe.throw(_("Amount must be equal to grand total"))

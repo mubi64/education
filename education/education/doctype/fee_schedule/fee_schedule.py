@@ -38,39 +38,6 @@ class FeeSchedule(Document):
         return info
 
     def validate(self):
-        # no_of_students = 0
-        # total_amount = 0
-        # for d in self.student_groups:
-        #     d.total_students = get_total_students(
-        #         d.student_group, self.academic_year, self.academic_term, self.student_category
-        #     )
-        #     no_of_students += cint(d.total_students)
-        #     students = get_students(
-        #         d.student_group, self.academic_year, self.academic_term, self.student_category
-        #     )
-        #     print(students, "student_groups")
-        #     for student in students:
-        #         # transportation_student = get_student_transportation(
-        #         #     student.student)
-        #         fee_student = frappe.get_doc('Student', student.student)
-        #         if fee_student.transportation_fee_structure:
-        #             transportation_student = frappe.get_doc(
-        #                 'Transportation Fee Structure', fee_student.transportation_fee_structure)
-        #             print(transportation_student, "transportation_student")
-        #             insert = False
-        #             for i, comp in enumerate(self.components):
-        #                 if comp.fees_category != "Transportation Fee":
-        #                     insert = True
-        #                 else:
-        #                     insert = False
-        #             if insert:
-        #                 row = self.append('components', {})
-        #                 row.fees_category = "Transportation Fee"
-        #                 row.amount = transportation_student.fee_amount
-        # for i, comp in enumerate(self.components):
-        #     total_amount = total_amount + comp.amount
-        # self.total_amount = total_amount
-        # self.grand_total = no_of_students * self.total_amount
         self.calculate_total_and_program()
 
     def calculate_total_and_program(self):
@@ -133,10 +100,13 @@ def generate_fee(fee_schedule):
     total_records = sum([int(d.total_students) for d in doc.student_groups])
     created_records = 0
     all_skipped = True
+    fee_category = []
 
     if not total_records:
         frappe.throw(_("Please setup Students under Student Groups"))
 
+    for category in doc.components:
+        fee_category.append(category.fees_category)
     
     for d in doc.student_groups:
         students = get_students(
@@ -153,12 +123,12 @@ def generate_fee(fee_schedule):
                 # Check if fees already exist for this student and posting_date
                 existing_fees = frappe.get_list(
                         "Fees",
-                        filters={
-                            "student": student.student,
-                            "posting_date": doc.posting_date,
-                            "docstatus": ["!=", 2],  # Exclude cancelled documents
-                            # Add more filters as needed
-                        },
+                        filters=[
+                            ["Fees","posting_date","=",doc.posting_date],
+                            ["Fee Component","fees_category","in",fee_category],
+                            ["Fees","student","=",student.student],
+                            ["Fees","docstatus","!=","2"] 
+                        ],
                         fields=["name"]
                     )
                     
@@ -203,6 +173,7 @@ def generate_fee(fee_schedule):
                 )
     if all_skipped:
         frappe.db.set_value("Fee Schedule", fee_schedule, "fee_creation_status", "Failed")
+        frappe.db.set_value("Fee Schedule", fee_schedule, "error_log", "Fee already exist")
     elif error:
         frappe.db.rollback()
         frappe.db.set_value("Fee Schedule", fee_schedule,
