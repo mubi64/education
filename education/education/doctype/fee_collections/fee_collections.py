@@ -89,7 +89,7 @@ class FeeCollections(Document):
 
 			row.components = ", ".join(compoArray)
 			
-			self.grand_total += fee.outstanding_amount
+			self.grand_total += (fee.outstanding_amount if self.is_return == 0 else fee.grand_total)
 			self.grand_total_b_tax += fee.grand_total_before_tax
 			self.total_tax_a += fee.total_taxes_and_charges
 			self.grand_total_b_d += fee.amount_before_discount
@@ -174,8 +174,7 @@ class FeeCollections(Document):
 				fee_doc = frappe.get_doc("Fees", item.fees, fields=['*'])
 
 				if fee_doc.outstanding_amount == 0:
-					fee_doc.is_return = 1
-					fee_doc.save()
+					frappe.db.set_value("Fees", fee_doc.name, "is_return", 1)
 					self.create_journal_entry(fee_doc)
 
 		else:
@@ -210,7 +209,7 @@ class FeeCollections(Document):
 
 	def validate_amounts(self):
 		amount_in_table = sum(row.amount for row in self.fee_collection_payment)
-		amount_in_fee_table = sum(row.outstanding_amount for row in self.student_fee_details)
+		amount_in_fee_table = sum(row.outstanding_amount for row in self.student_fee_details) if self.is_return == 0 else sum(row.total_amount for row in self.student_fee_details)
 
 		if round_val(amount_in_table, 3) != round_val(amount_in_fee_table, 3):
 			frappe.throw(_("Amount must be equal to grand total"))
