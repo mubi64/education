@@ -46,7 +46,7 @@ class ProgramEnrollmentTool(Document):
 					where program=%(program)s and academic_year=%(academic_year)s {0} {1} and docstatus != 2""".format(
 						condition, condition2
 					),
-					{"program": self.program, "academic_year": self.academic_year},
+					{"program": self.program, "academic_year": self.academic_year, "student_batch": self.student_batch},
 					as_dict=1,
 				)
 
