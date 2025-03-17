@@ -27,7 +27,6 @@ frappe.ui.form.on("Program Enrollment Tool", {
 
 	"get_students": function (frm) {
 		frm.set_value("students", []);
-		console.log("frm.doc", frm.doc);
 		
 		frappe.call({
 			method: "get_students",
