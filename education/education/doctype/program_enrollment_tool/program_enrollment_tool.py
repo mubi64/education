@@ -59,10 +59,10 @@ class ProgramEnrollmentTool(Document):
 						tuple(student_list),
 						as_dict=1,
 					)
-
-					for student in students:
-						if student.student in [d.student for d in inactive_students]:
-							students.remove(student)
+					
+					filtered_students = [student for student in students if student.student not in {d.student for d in inactive_students}]
+					students = []
+					students = filtered_students
 
 		if students:
 			return students
