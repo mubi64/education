@@ -34,7 +34,7 @@ class ProgramEnrollmentTool(Document):
 					where application_status="Approved" and program=%(program)s and academic_year=%(academic_year)s {0}""".format(
 						condition
 					),
-					{"program": self.program, "academic_year": self.academic_year},
+					{"program": self.program, "academic_year": self.academic_year, "academic_term": self.academic_term},
 					as_dict=1,
 				)
 			elif self.get_students_from == "Program Enrollment":
