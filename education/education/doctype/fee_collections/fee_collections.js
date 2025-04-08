@@ -138,11 +138,11 @@ frappe.ui.form.on("Fee Collections", {
       method: "education.education.api.get_outstanding_student_fee",
       args: frm.doc.student
         ? {
-            student: frm.doc.student,
-          }
+          student: frm.doc.student,
+        }
         : {
-            family_code: frm.doc.family_code,
-          },
+          family_code: frm.doc.family_code,
+        },
       callback: async function (r) {
         if (r.message.fees.length == 0) {
           frappe.throw(__("There are no outstanding fee found in the system"));
@@ -163,11 +163,11 @@ frappe.ui.form.on("Fee Collections", {
       method: "education.education.api.get_advanced_student_fee",
       args: frm.doc.student
         ? {
-            student: frm.doc.student,
-          }
+          student: frm.doc.student,
+        }
         : {
-            family_code: frm.doc.family_code,
-          },
+          family_code: frm.doc.family_code,
+        },
       callback: function (r) {
         processFees(frm, r.message.fees);
         frm.doc.net_total = r.message.gross_amount;
@@ -184,11 +184,11 @@ frappe.ui.form.on("Fee Collections", {
       method: "education.education.api.get_student_fee_details",
       args: frm.doc.student
         ? {
-            student: frm.doc.student,
-          }
+          student: frm.doc.student,
+        }
         : {
-            family_code: frm.doc.family_code,
-          },
+          family_code: frm.doc.family_code,
+        },
       callback: function (r) {
         processFees(frm, r.message.fees);
         frm.doc.net_total = r.message.gross_amount;

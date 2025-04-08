@@ -41,13 +41,14 @@ class Fees(AccountsController, WebsiteGenerator):
                 ['posting_date', 'between', [result_date, self.posting_date]],
                 ['student', "=", self.student],
                 ['Fee Component', 'fees_category', 'in', fees_category_array]
-            ], fields=["*"])
+            ], fields=["name"])
 
-        if len(fee) > 0:
-            raise TypeError(_("Fee already exists in the system for the same month"))
+        if fee:
+            frappe.throw(_("Fee already exists in the system for the same month"), title="Duplicate Fee Error")
         else:
-            for i, comp in enumerate(self.components):
-                comp.gross_amount = comp.amount if comp.gross_amount == 0 else comp.gross_amount
+            for comp in self.components:
+                if comp.gross_amount == 0:
+                    comp.gross_amount = comp.amount or 0
         
 
             self.append_discount()
