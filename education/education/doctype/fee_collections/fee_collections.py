@@ -18,6 +18,14 @@ from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_ac
 class FeeCollections(Document):
 	def before_save(self):
 		self.apply_discounts()
+
+	def on_cancel(self):
+		for fee in self.student_fee_details:
+			if fee.fees:
+				feedoc = frappe.get_doc("Fees", fee.fees)
+				if feedoc.docstatus == 1:
+					feedoc.cancel()
+
 		
 				
 	@frappe.whitelist()
@@ -150,7 +158,7 @@ class FeeCollections(Document):
 						fee = frappe.get_doc("Fees", adv_fee.fees)
 						if fee.discount_type != "":
 							fee.discount_type = ""
-							fee.percentage = 0,
+							fee.percentage = 0
 							fee.discount_amount = 0
 							fee.save()
 				
@@ -160,7 +168,7 @@ class FeeCollections(Document):
 					fee = frappe.get_doc("Fees", adv_fee.fees)
 					if fee.discount_type != "":
 						fee.discount_type = ""
-						fee.percentage = 0,
+						fee.percentage = 0
 						fee.discount_amount = 0
 						fee.save()
 			self.total_d_a = total_discount_amount
@@ -188,7 +196,7 @@ class FeeCollections(Document):
 
 				for row in self.fee_collection_payment:
 					amount_percentage = flt(row.amount) / flt(self.grand_total) * 100
-					outst_amount = flt(item.outstanding_amount) / 100 * amount_percentage
+					outst_amount = flt(item.outstanding_amount) / 100 * flt(amount_percentage)
 					
 					temp_dict = {
 						"name": item.student_id,
@@ -252,7 +260,7 @@ class FeeCollections(Document):
 		for row in self.fee_collection_payment:
 			amount_percentage = 0
 			outst_amount = 0
-			amount_percentage = flt(row.amount) / float(self.grand_total) * 100
+			amount_percentage = flt(row.amount) / flt(self.grand_total) * 100
 			outst_amount = flt(fee_doc.grand_total) / 100 * flt(amount_percentage)
 			credit_account = get_bank_cash_account(row.mode_of_payment, self.company)
 			

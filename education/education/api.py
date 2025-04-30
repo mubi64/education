@@ -536,7 +536,7 @@ def get_advanced_student_fee(student = None, family_code = None):
 	
 	student_fee = frappe.get_all("Fees", filters=[
 		["student", "in", student if family_code == None else student_list],
-		["outstanding_amount", "!=", 0],
+		["outstanding_amount", ">", 0],
 		["docstatus", "!=", 2],
 		["is_return", "=", 0],
 		["posting_date", ">", today()],
@@ -575,7 +575,7 @@ def get_outstanding_student_fee(student = None, family_code = None):
 	
 	student_fee = frappe.get_all("Fees", filters=[
 		["student", "in", student if family_code == None else student_list],
-		["outstanding_amount", "!=", 0],
+		["outstanding_amount", ">", 0],
 		["docstatus", "!=", 2],
 		["is_return", "=", 0],
 		["posting_date", "<=", today()],
@@ -610,7 +610,7 @@ def get_student_fee_details(student = None, family_code = None):
 	
 	student_fee = frappe.get_all("Fees", filters=[
 		["student", "in", student if family_code == None else student_list],
-		["outstanding_amount", "!=", 0],
+		["outstanding_amount", ">", 0],
 		["is_return", "=", 0],
 		["docstatus", "!=", 2],
 	], fields=["*"])
