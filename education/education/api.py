@@ -550,12 +550,15 @@ def get_advanced_student_fee(student = None, family_code = None):
 	discount = 0
 	net_total_a_d = 0
 	for fee in student_fee:
+		fees = frappe.get_doc("Fees", fee.name)
+		fees.validate()
+		fees.save()
 		compoArray = []
-		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
+		# components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
 		discount = 0
 		net_total_a_d = 0
 		net_total = 0
-		for ele in components:
+		for ele in fees.components:
 			compoArray.append(ele.fees_category)
 			dis_amount = ele.gross_amount - ele.amount
 			net_total += ele.gross_amount
@@ -585,18 +588,22 @@ def get_outstanding_student_fee(student = None, family_code = None):
 	discount = 0
 	net_total_a_d = 0
 	for fee in student_fee:
+		fees = frappe.get_doc("Fees", fee.name)
+		fees.validate()
+		fees.save()
 		compoArray = []
-		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
+		# components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
 		discount = 0
 		net_total = 0
 		net_total_a_d = 0
-		for ele in components:
+		for ele in fees.components:
 			compoArray.append(ele.fees_category)
 			dis_amount = ele.gross_amount - ele.amount
 			net_total += ele.gross_amount
 			discount += dis_amount
 			net_total_a_d += ele.amount
 
+		# print("\n\n\n\ncompoArray", compoArray)
 		fee['components'] = ", ".join(compoArray)
 
 
@@ -621,12 +628,15 @@ def get_student_fee_details(student = None, family_code = None):
 	discount = 0
 	net_total_a_d = 0
 	for fee in student_fee:
+		fees = frappe.get_doc("Fees", fee.name)
+		fees.validate()
+		fees.save()
 		compoArray = []
-		components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
+		# components = frappe.db.get_values("Fee Component", filters={'parent': fee.name}, fieldname=['fees_category', 'gross_amount', 'amount'], as_dict=1)
 		discount = 0
 		net_total = 0
 		net_total_a_d = 0
-		for ele in components:
+		for ele in fees.components:
 			compoArray.append(ele.fees_category)
 			dis_amount = ele.gross_amount - ele.amount
 			net_total += ele.gross_amount

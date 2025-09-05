@@ -195,24 +195,25 @@ class FeeCollections(Document):
 					current_fee.submit()
 
 				for row in self.fee_collection_payment:
-					amount_percentage = flt(row.amount) / flt(self.grand_total) * 100
-					outst_amount = flt(item.outstanding_amount) / 100 * flt(amount_percentage)
-					
+					amount_percentage = row.amount / self.grand_total * 100
+					outst_amount = item.outstanding_amount / 100 * amount_percentage
+					# print(outst_amount, "outst_amount")
 					temp_dict = {
 						"name": item.student_id,
 						"amount": round_val(outst_amount, 3), # item.outstanding_amount,
 						"fee": item.fees
 					}
 					self.mode_of_payment = row.mode_of_payment
-				values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
-				values.reference_no = self.reference_no
-				values.reference_date = self.reference_date
-				
-				for ref in values.references:
-					ref.allocated_amount = ref.outstanding_amount
-					# print(ref.allocated_amount, ref.outstanding_amount, ref.reference_name, "paid_from \n\n\n ")
-				values.insert()
-				values.submit()
+					values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
+					values.reference_no = self.reference_no
+					values.reference_date = self.reference_date
+					
+					# print(values.references)
+					# for ref in values.references:
+					# 	ref.allocated_amount = ref.outstanding_amount
+						# print(ref.allocated_amount, ref.outstanding_amount, ref.reference_name, "paid_from \n\n\n ")
+					values.insert()
+					values.submit()
 			
 
 	def validate_amounts(self):
@@ -423,11 +424,18 @@ class FeeCollections(Document):
 									"reference_name": student_fee.fees,
 									"bill_no": doc.get("bill_no"),
 									"due_date": doc.get("due_date"),
-									"total_amount": grand_total,
+									"total_amount": student_fee.outstanding_amount,
 									"outstanding_amount": student_fee.outstanding_amount,
-									"allocated_amount": student_fee.outstanding_amount,
+									"allocated_amount": fee["amount"],
 								},
 							)
+
+					# for reference in pe.get("references", []):
+					# 	print(outstanding_amount, "outstanding_amount")
+					# 	print(reference.total_amount)
+					# 	print(reference.outstanding_amount)
+					# 	print(reference.allocated_amount)
+					# 	print(reference, "reference \n\n\n\n\n")
 
 		pe.setup_party_account_field()
 		pe.set_missing_values()

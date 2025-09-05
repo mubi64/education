@@ -242,13 +242,13 @@
    "depends_on": "eval:doc.docstatus == 0 && doc.is_return == 0",
    "fieldname": "get_outstanding_fees",
    "fieldtype": "Button",
-   "label": "Get Outstanding Fees"
+   "label": "Outstanding Fees"
   },
   {
    "depends_on": "eval:doc.docstatus == 0 && doc.is_return == 0",
    "fieldname": "get_advance_fees",
    "fieldtype": "Button",
-   "label": "Get Advance Fees"
+   "label": "Advance Fees"
   },
   {
    "depends_on": "eval:doc.refund_against != null",
@@ -291,7 +291,7 @@
    "depends_on": "eval:doc.docstatus == 0 && doc.is_return == 0",
    "fieldname": "get_all_fees",
    "fieldtype": "Button",
-   "label": "Get All Fees"
+   "label": "All Fees"
   },
   {
    "fieldname": "column_break_cnvie",
@@ -331,10 +331,11 @@
    "label": "Apply Discount"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-11-14 09:57:47.852941",
+ "modified": "2025-09-05 08:31:58.207509",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",
@@ -354,6 +355,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

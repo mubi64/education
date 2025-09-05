@@ -3,18 +3,31 @@
 
 frappe.ui.form.on("Fee Collections", {
   refresh: async function (frm) {
-    frm
-      .get_field("get_outstanding_fees")
-      .$input.addClass("btn-warning")
-      .css({ "background-color": "#ffc101" });
-    frm
-      .get_field("get_advance_fees")
-      .$input.addClass("btn-primary")
-      .css({ "background-color": "#2490ef", color: "white" });
-    frm
-      .get_field("get_all_fees")
-      .$input.addClass("btn-succsess")
-      .css({ "background-color": "#2f9d5f", color: "white" });
+    styleButton(
+      frm.get_field("get_outstanding_fees"),
+      "linear-gradient(135deg, #ffcc00, #ff9900)",
+      "linear-gradient(135deg, #ffd633, #ffb84d)",
+      ""
+    );
+    styleButton(
+      frm.get_field("get_advance_fees"),
+      "linear-gradient(135deg, #2490ef, #0077cc)",
+      "linear-gradient(135deg, #4da6ff, #3399ff)",
+      ""
+    );
+    styleButton(
+      frm.get_field("get_all_fees"),
+      "linear-gradient(135deg, #2f9d5f, #28a745)",
+      "linear-gradient(135deg, #4cd080, #34c759)",
+      "💰"
+    );
+    styleButton(
+      frm.get_field("apply_discount"),
+      "linear-gradient(135deg, #9b59b6, #8e44ad)",
+      "linear-gradient(135deg, #b37cd3, #9b59b6)",
+      "🏷️"
+    );
+
     if (frm.doc.docstatus == 1 && frm.doc.is_return == 0) {
       frm.add_custom_button(__("Make Refund"), async function () {
         const array = [];
@@ -233,6 +246,50 @@ frappe.ui.form.on("Fee Collections", {
     frm.refresh_field("fee_collection_payment");
   },
 });
+
+function styleButton(btn, bgColor, hoverBg, icon) {
+  if (!btn) return;
+
+  // Add icon if not already added
+  let label = btn.$input.text().trim();
+  if (!label.startsWith(icon)) {
+    btn.$input.text(icon + " " + label);
+  }
+
+  btn.$input.css({
+    "background": bgColor,
+    "color": "white",
+    "border": "none",
+    "border-radius": "8px",
+    "padding": "8px 16px",
+    "font-weight": "600",
+    "font-size": "14px",
+    "transition": "all 0.3s ease",
+    "box-shadow": "0 3px 6px rgba(0,0,0,0.1)",
+    "cursor": "pointer",
+    "display": "inline-flex",
+    "align-items": "center",
+    "gap": "6px",
+  });
+
+  // Hover effect
+  btn.$input.hover(
+    function () {
+      $(this).css({
+        "background": hoverBg,
+        "transform": "translateY(-2px)",
+        "box-shadow": "0 6px 12px rgba(0,0,0,0.15)"
+      });
+    },
+    function () {
+      $(this).css({
+        "background": bgColor,
+        "transform": "translateY(0)",
+        "box-shadow": "0 3px 6px rgba(0,0,0,0.1)"
+      });
+    }
+  );
+}
 
 async function processFees(frm, array) {
   if (array) {
