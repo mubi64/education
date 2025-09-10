@@ -57,6 +57,7 @@
    "fieldname": "total_amount",
    "fieldtype": "Float",
    "label": "Total Amount",
+   "precision": "4",
    "read_only": 1
   },
   {
@@ -71,7 +72,7 @@
    "fieldname": "outstanding_amount",
    "fieldtype": "Float",
    "label": "Outstanding Amount",
-   "precision": "3",
+   "precision": "4",
    "read_only": 1
   },
   {
@@ -165,15 +166,17 @@
    "label": "Posting Date"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-11-15 13:07:26.072694",
+ "modified": "2025-09-10 09:13:34.621980",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Student Fee Details",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

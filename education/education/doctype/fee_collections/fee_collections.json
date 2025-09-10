@@ -153,7 +153,7 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Grand Total",
-   "precision": "3",
+   "precision": "4",
    "read_only": 1
   },
   {
@@ -335,7 +335,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-05 08:31:58.207509",
+ "modified": "2025-09-10 09:12:46.950279",
  "modified_by": "Administrator",
  "module": "Education",
  "name": "Fee Collections",

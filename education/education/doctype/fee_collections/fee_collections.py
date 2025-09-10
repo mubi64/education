@@ -97,11 +97,12 @@ class FeeCollections(Document):
 
 			row.components = ", ".join(compoArray)
 			
-			self.grand_total += (fee.outstanding_amount if self.is_return == 0 else fee.grand_total)
-			self.grand_total_b_tax += fee.grand_total_before_tax
-			self.total_tax_a += fee.total_taxes_and_charges
-			self.grand_total_b_d += fee.amount_before_discount
-			self.total_d_a += fee.total_discount_amount
+			
+			self.grand_total += (round_val(fee.outstanding_amount, 4) if self.is_return == 0 else round(fee.grand_total, 4))
+			self.grand_total_b_tax += round_val(fee.grand_total_before_tax, 4)
+			self.total_tax_a += round_val(fee.total_taxes_and_charges, 4)
+			self.grand_total_b_d += round_val(fee.amount_before_discount, 4)
+			self.total_d_a += round_val(fee.total_discount_amount, 4)
 
 	
 	def advance_fee_discount(self):
@@ -200,7 +201,7 @@ class FeeCollections(Document):
 					# print(outst_amount, "outst_amount")
 					temp_dict = {
 						"name": item.student_id,
-						"amount": round_val(outst_amount, 3), # item.outstanding_amount,
+						"amount": round_val(outst_amount, 4), # item.outstanding_amount,
 						"fee": item.fees
 					}
 					self.mode_of_payment = row.mode_of_payment
@@ -217,10 +218,12 @@ class FeeCollections(Document):
 			
 
 	def validate_amounts(self):
-		amount_in_table = sum(row.amount for row in self.fee_collection_payment)
-		amount_in_fee_table = sum(row.outstanding_amount for row in self.student_fee_details) if self.is_return == 0 else sum(row.total_amount for row in self.student_fee_details)
+		amount_in_table = sum(round_val(row.amount, 4) for row in self.fee_collection_payment)
+		amount_in_fee_table = sum(round_val(row.outstanding_amount, 4) for row in self.student_fee_details) if self.is_return == 0 else sum(round_val(row.total_amount, 4) for row in self.student_fee_details)
 
-		if round_val(amount_in_table, 3) != round_val(amount_in_fee_table, 3):
+		# print(amount_in_table, amount_in_fee_table, "amount_in_table, amount_in_fee_table \n\n\n\n\n")
+		# print(round_val(amount_in_table, 4), round_val(amount_in_fee_table, 4), "round_val(amount_in_table, 4), round_val(amount_in_fee_table, 4) \n\n\n\n\n")
+		if round_val(amount_in_table, 4) != round_val(amount_in_fee_table, 4):
 			frappe.throw(_("Amount must be equal to grand total"))
 
 	def create_journal_entry(self, fee_doc):
