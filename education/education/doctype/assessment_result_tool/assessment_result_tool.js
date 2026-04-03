@@ -87,7 +87,7 @@ frappe.ui.form.on('Assessment Result Tool', {
 			let total_score = 0;
 			let student_scores = {};
 			student_scores["assessment_details"] = {}
-			result_table.find(`input[data-student=${student}].student-result-data`)
+			result_table.find(`input[data-student="${student}"].student-result-data`)
 				.each(function(el, input) {
 					let $input = $(input);
 					let criteria = $input.data().criteria;
@@ -98,12 +98,12 @@ frappe.ui.form.on('Assessment Result Tool', {
 					total_score += value;
 			});
 			if(!Number.isNaN(total_score)) {
-				result_table.find(`span[data-student=${student}].total-score`).html(total_score);
+				result_table.find(`span[data-student="${student}"].total-score`).html(total_score);
 			}
 			if (Object.keys(student_scores["assessment_details"]).length === criteria_list.length) {
 				student_scores["student"] = student;
 				student_scores["total_score"] = total_score;
-				result_table.find(`[data-student=${student}].result-comment`)
+				result_table.find(`[data-student="${student}"].result-comment`)
 					.each(function(el, input){
 					student_scores["comment"] = $(input).val();
 				});
@@ -117,16 +117,16 @@ frappe.ui.form.on('Assessment Result Tool', {
 						let assessment_result = r.message;
 						if (!frm.doc.show_submit) {
 							frm.doc.show_submit = true;
-							frm.events.submit_result;
+							frm.events.submit_result(frm);
 						}
 						for (var criteria of Object.keys(assessment_result.details)) {
-							result_table.find(`[data-criteria=${criteria}][data-student=${assessment_result
-								.student}].student-result-grade`).each(function(e1, input) {
+							result_table.find(`[data-criteria="${criteria}"][data-student="${assessment_result
+								.student}"].student-result-grade`).each(function(e1, input) {
 									$(input).html(assessment_result.details[criteria]);
 							});
 						}
-						result_table.find(`span[data-student=${assessment_result.student}].total-score-grade`).html(assessment_result.grade);
-						let link_span = result_table.find(`span[data-student=${assessment_result.student}].total-result-link`);
+						result_table.find(`span[data-student="${assessment_result.student}"].total-score-grade`).html(assessment_result.grade);
+						let link_span = result_table.find(`span[data-student="${assessment_result.student}"].total-result-link`);
 						$(link_span).css("display", "block");
 						$(link_span).find("a").attr("href", "/app/assessment-result/"+assessment_result.name);
 					}
