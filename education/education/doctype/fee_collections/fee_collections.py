@@ -195,27 +195,45 @@ class FeeCollections(Document):
 					current_fee.save()
 					current_fee.submit()
 
-				for row in self.fee_collection_payment:
-					amount_percentage = row.amount / self.grand_total * 100
+			for row in self.fee_collection_payment:
+				amount_percentage = row.amount / self.grand_total * 100
+				self.mode_of_payment = row.mode_of_payment
+
+				# One Payment Entry can only have one party, so allocations are grouped
+				# by student first - a collection can cover multiple siblings at once -
+				# and every fee item for that same student is combined into a single
+				# Payment Entry instead of one per fee item.
+				allocations_by_student = {}
+				for item in self.student_fee_details:
 					outst_amount = item.outstanding_amount / 100 * amount_percentage
-					# print(outst_amount, "outst_amount")
+					allocated = round_val(outst_amount, 4)
+					allocations_by_student.setdefault(item.student_id, []).append((item, allocated))
+
+				for student_id, allocations in allocations_by_student.items():
+					total_allocated = sum(allocated for _, allocated in allocations)
+					first_item, _ = allocations[0]
 					temp_dict = {
-						"name": item.student_id,
-						"amount": round_val(outst_amount, 4), # item.outstanding_amount,
-						"fee": item.fees
+						"name": student_id,
+						"amount": total_allocated,
+						"fee": first_item.fees
 					}
-					self.mode_of_payment = row.mode_of_payment
 					values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
 					values.reference_no = self.reference_no
 					values.reference_date = self.reference_date
-					
-					# print(values.references)
-					# for ref in values.references:
-					# 	ref.allocated_amount = ref.outstanding_amount
-						# print(ref.allocated_amount, ref.outstanding_amount, ref.reference_name, "paid_from \n\n\n ")
+
+					values.references = []
+					for item, allocated in allocations:
+						values.append("references", {
+							"reference_doctype": "Fees",
+							"reference_name": item.fees,
+							"total_amount": item.outstanding_amount,
+							"outstanding_amount": item.outstanding_amount,
+							"allocated_amount": allocated,
+						})
+
 					values.insert()
 					values.submit()
-			
+
 
 	def validate_amounts(self):
 		amount_in_table = sum(round_val(row.amount, 4) for row in self.fee_collection_payment)

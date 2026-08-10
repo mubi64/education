@@ -81,7 +81,8 @@
    "in_global_search": 1,
    "label": "Student",
    "options": "Student",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "student.student_name",
