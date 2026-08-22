@@ -28,37 +28,38 @@ class Fees(AccountsController, WebsiteGenerator):
     def validate(self):
         if not self.route:
             self.route = "fees/" + self.name
-        fees_category_array = []
-        one_month_earlier = add_months(self.posting_date, -1)
-        
-        result_date = add_days(one_month_earlier, 1)
-        for com in self.components:
-            fees_category_array.append(com.fees_category)
-        
-        fee = frappe.db.get_all("Fees", filters=[
-                ['name', '!=', self.name],
-                ['docstatus', "!=", 2],
-                ['posting_date', 'between', [result_date, self.posting_date]],
-                ['student', "=", self.student],
-                ['Fee Component', 'fees_category', 'in', fees_category_array]
-            ], fields=["name"])
 
-        if fee:
-            frappe.throw(_("Fee already exists in the system for the same month"), title="Duplicate Fee Error")
-        else:
-            for comp in self.components:
-                if comp.gross_amount == 0:
-                    comp.gross_amount = comp.amount or 0
-        
+        if not self.flags.skip_duplicate_check:
+            fees_category_array = [com.fees_category for com in self.components]
+            one_month_earlier = add_months(self.posting_date, -1)
+            result_date = add_days(one_month_earlier, 1)
 
-            self.append_discount()
-            self.set_missing_accounts_and_fields()
-            self.calculate_total()
-         
+            fee = frappe.db.get_all("Fees", filters=[
+                    ['name', '!=', self.name],
+                    ['docstatus', "!=", 2],
+                    ['posting_date', 'between', [result_date, self.posting_date]],
+                    ['student', "=", self.student],
+                    ['Fee Component', 'fees_category', 'in', fees_category_array]
+                ], fields=["name"])
+
+            if fee:
+                frappe.throw(_("Fee already exists in the system for the same month"), title="Duplicate Fee Error")
+
+        for comp in self.components:
+            if comp.gross_amount == 0:
+                comp.gross_amount = comp.amount or 0
+
+        self.append_discount()
+        self.set_missing_accounts_and_fields()
+        self.calculate_total()
+
 
 
     def append_discount(self):
-        discount_doc = get_student_dicount(self.student)
+        if "cached_discount_doc" in self.flags:
+            discount_doc = self.flags.cached_discount_doc
+        else:
+            discount_doc = get_student_dicount(self.student)
         if discount_doc != None:
             discounts = discount_doc.discount
             for e, component in enumerate(self.components):
@@ -225,7 +226,26 @@ class Fees(AccountsController, WebsiteGenerator):
             return None
 
     def on_submit(self):
-        self.make_gl_entries()
+        # Ledger posting (make_gl_entries, below) is the slow part of Submit -
+        # it's deferred to a background job so the document reaches
+        # "Submitted" quickly. post_fee_gl_entries() does the actual posting
+        # afterwards, still one Fees document at a time, same ledger entries
+        # as before - only the timing changes, not the accounting result.
+        #
+        # When submitted as part of a Fee Collections batch, that caller
+        # posts the ledger itself (via _post_fee_ledger) as part of its own
+        # combined background job, and only afterwards creates the Payment
+        # Entry - so a Payment Entry's credit-side entry never lands before
+        # this Fees document's own debit-side entry exists. Setting this
+        # flag tells this hook not to also enqueue its own separate job.
+        self.db_set("gl_posting_status", "Queued", update_modified=False)
+        if not self.flags.defer_gl_posting_to_caller:
+            frappe.enqueue(
+                method="education.education.doctype.fees.fees.post_fee_gl_entries",
+                queue="short",
+                enqueue_after_commit=True,
+                fees_name=self.name,
+            )
 
         if self.send_payment_request and self.student_email:
             pr = make_payment_request(
@@ -244,9 +264,14 @@ class Fees(AccountsController, WebsiteGenerator):
 
     def on_cancel(self):
         self.ignore_linked_doctypes = ("GL Entry", "Payment Ledger Entry")
-        make_reverse_gl_entries(
-            voucher_type=self.doctype, voucher_no=self.name)
-        # frappe.db.set(self, 'status', 'Cancelled')
+        # Only reverse the ledger if it was actually posted - if the
+        # background job hasn't run yet (or failed), there's nothing to
+        # reverse. post_fee_gl_entries() re-checks docstatus before posting,
+        # so a job still queued at cancel time will see docstatus 2 and skip.
+        if self.gl_posting_status == "Posted":
+            make_reverse_gl_entries(
+                voucher_type=self.doctype, voucher_no=self.name)
+        self.db_set("gl_posting_status", "", update_modified=False)
 
     
     def make_gl_entries(self):
@@ -435,6 +460,42 @@ class Fees(AccountsController, WebsiteGenerator):
             update_outstanding="Yes",
             merge_entries=False,
         )
+
+
+def post_fee_gl_entries(fees_name):
+    """Background counterpart to Fees.on_submit() for a Fees document
+    submitted on its own (not as part of a Fee Collections batch).
+    """
+    fee_doc = frappe.get_doc("Fees", fees_name)
+    _post_fee_ledger(fee_doc)
+
+
+def _post_fee_ledger(fee_doc):
+    """Post one Fees document's own ledger entries (make_gl_entries) and
+    record the outcome on gl_posting_status.
+
+    Shared by post_fee_gl_entries (standalone submit) and Fee Collections'
+    combined background job (fee_collections.py), so a fee's own entry is
+    always written through this same path, one document at a time, same
+    as the original synchronous code - only the caller/timing differs.
+    Returns True if posted, False if skipped or failed.
+    """
+    if fee_doc.docstatus != 1:
+        # Cancelled (or never actually submitted) before this ran -
+        # nothing to post.
+        return False
+
+    try:
+        fee_doc.make_gl_entries()
+        fee_doc.db_set("gl_posting_status", "Posted", update_modified=False)
+        frappe.db.commit()
+        return True
+    except Exception:
+        frappe.db.rollback()
+        fee_doc.db_set("gl_posting_status", "Failed", update_modified=False)
+        frappe.log_error(title=f"Fees {fee_doc.name}: background ledger posting failed")
+        frappe.db.commit()
+        return False
 
 def get_fee_list(
         doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified"
@@ -743,3 +804,36 @@ def get_student_dicount(student):
     if fee_student.fee_discount_type:
         return frappe.get_doc(
             'Fee Discount Type', fee_student.fee_discount_type)
+
+
+def check_duplicate_fees_batch(fee_docs):
+    """Run the "already charged this month" check once per (student, date)
+    group instead of once per fee item.
+
+    Every item in a group asks the exact same question (same student, same
+    month), so this collapses what would be N identical-shaped queries
+    into one query per distinct student+date combination in the batch -
+    typically just one query for a whole receipt. Runs before any of the
+    fee items in the batch are saved, so a duplicate is caught before
+    anything is written, instead of partway through the batch.
+    """
+    groups = {}
+    for doc in fee_docs:
+        one_month_earlier = add_months(doc.posting_date, -1)
+        result_date = add_days(one_month_earlier, 1)
+        key = (doc.student, doc.posting_date, result_date)
+        group = groups.setdefault(key, {"names": [], "categories": set()})
+        group["names"].append(doc.name)
+        group["categories"].update(com.fees_category for com in doc.components)
+
+    for (student, posting_date, result_date), group in groups.items():
+        fee = frappe.db.get_all("Fees", filters=[
+                ['name', 'not in', group["names"]],
+                ['docstatus', "!=", 2],
+                ['posting_date', 'between', [result_date, posting_date]],
+                ['student', "=", student],
+                ['Fee Component', 'fees_category', 'in', list(group["categories"])]
+            ], fields=["name"])
+
+        if fee:
+            frappe.throw(_("Fee already exists in the system for the same month"), title="Duplicate Fee Error")

@@ -4,6 +4,7 @@
 from functools import reduce
 from education.education.utils import round_val
 
+import erpnext
 import frappe
 from frappe import _, scrub
 from frappe.model.document import Document
@@ -14,6 +15,7 @@ import datetime
 from erpnext.accounts.doctype.payment_entry.payment_entry import set_party_type, set_party_account, set_party_account_currency, set_payment_type, set_grand_total_and_outstanding_amount, set_paid_amount_and_received_amount, apply_early_payment_discount, get_reference_as_per_payment_terms, update_accounting_dimensions, split_early_payment_discount_loss, set_pending_discount_loss, get_bank_cash_account
 from frappe.utils import flt, getdate, nowdate, formatdate
 from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_account
+from education.education.doctype.fees.fees import get_student_dicount, check_duplicate_fees_batch, _post_fee_ledger
 
 class FeeCollections(Document):
 	def before_save(self):
@@ -187,52 +189,151 @@ class FeeCollections(Document):
 					self.create_journal_entry(fee_doc)
 
 		else:
+			pending_fees = []
 			for item in self.student_fee_details:
 				current_fee = frappe.get_doc("Fees", item.fees)
-
 				if current_fee.docstatus != 1:
+					pending_fees.append(current_fee)
+
+			if pending_fees:
+				# Check every pending fee for duplicates in one pass, before
+				# saving any of them - same rule as before, just asked once
+				# per student+month instead of once per fee item.
+				check_duplicate_fees_batch(pending_fees)
+
+				company_defaults = {}
+				discount_docs = {}
+				student_emails = {}
+
+				for current_fee in pending_fees:
+					if not current_fee.company:
+						current_fee.company = frappe.defaults.get_defaults().company
+					company = current_fee.company
+
+					if company not in company_defaults:
+						accounts_details = frappe.get_all(
+							"Company",
+							fields=["default_receivable_account", "default_income_account", "cost_center"],
+							filters={"name": company},
+						)[0]
+						company_defaults[company] = {
+							"currency": erpnext.get_company_currency(company),
+							"receivable_account": accounts_details.default_receivable_account,
+							"income_account": accounts_details.default_income_account,
+							"cost_center": accounts_details.cost_center,
+						}
+					defaults = company_defaults[company]
+
+					if not current_fee.currency:
+						current_fee.currency = defaults["currency"]
+					if not current_fee.receivable_account:
+						current_fee.receivable_account = defaults["receivable_account"]
+					if not current_fee.income_account:
+						current_fee.income_account = defaults["income_account"]
+					if not current_fee.cost_center:
+						current_fee.cost_center = defaults["cost_center"]
+
+					student = current_fee.student
+					if student not in discount_docs:
+						discount_docs[student] = get_student_dicount(student)
+					if student not in student_emails:
+						student_emails[student] = current_fee.get_student_emails()
+					if not current_fee.student_email:
+						current_fee.student_email = student_emails[student]
+
+					current_fee.flags.skip_duplicate_check = True
+					current_fee.flags.cached_discount_doc = discount_docs[student]
+					current_fee.flags.defer_gl_posting_to_caller = True
+
 					current_fee.fee_collections = self.name
 					current_fee.save()
 					current_fee.submit()
 
-			for row in self.fee_collection_payment:
-				amount_percentage = row.amount / self.grand_total * 100
-				self.mode_of_payment = row.mode_of_payment
+			# The Payment Entry (below, in create_payment_entries) has to be
+			# created *after* every fee item's own ledger entry is posted -
+			# otherwise its credit-side entry could land before the fee's
+			# own debit-side entry exists, and the fee's Outstanding Amount
+			# would briefly read wrong. So both steps happen together in one
+			# background job, in that order, instead of here.
+			frappe.enqueue(
+				method="education.education.doctype.fee_collections.fee_collections.post_fee_collection_ledger_entries",
+				queue="short",
+				enqueue_after_commit=True,
+				fee_collection_name=self.name,
+			)
 
-				# One Payment Entry can only have one party, so allocations are grouped
-				# by student first - a collection can cover multiple siblings at once -
-				# and every fee item for that same student is combined into a single
-				# Payment Entry instead of one per fee item.
-				allocations_by_student = {}
-				for item in self.student_fee_details:
-					outst_amount = item.outstanding_amount / 100 * amount_percentage
-					allocated = round_val(outst_amount, 4)
-					allocations_by_student.setdefault(item.student_id, []).append((item, allocated))
+	def create_payment_entries(self):
+		posted_fees = {
+			item.fees for item in self.student_fee_details
+			if frappe.db.get_value("Fees", item.fees, "gl_posting_status") == "Posted"
+		}
 
-				for student_id, allocations in allocations_by_student.items():
-					total_allocated = sum(allocated for _, allocated in allocations)
-					first_item, _ = allocations[0]
-					temp_dict = {
-						"name": student_id,
-						"amount": total_allocated,
-						"fee": first_item.fees
-					}
-					values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
-					values.reference_no = self.reference_no
-					values.reference_date = self.reference_date
+		for row in self.fee_collection_payment:
+			amount_percentage = row.amount / self.grand_total * 100
+			self.mode_of_payment = row.mode_of_payment
 
-					values.references = []
-					for item, allocated in allocations:
-						values.append("references", {
-							"reference_doctype": "Fees",
-							"reference_name": item.fees,
-							"total_amount": item.outstanding_amount,
-							"outstanding_amount": item.outstanding_amount,
-							"allocated_amount": allocated,
-						})
+			# One Payment Entry can only have one party, so allocations are grouped
+			# by student first - a collection can cover multiple siblings at once -
+			# and every fee item for that same student is combined into a single
+			# Payment Entry instead of one per fee item.
+			allocations_by_student = {}
+			for item in self.student_fee_details:
+				if item.fees not in posted_fees:
+					# That fee's own ledger entry failed to post - skip it
+					# rather than allocate payment against a fee with no
+					# ledger entry to reference. Left for manual follow-up
+					# (see the Error Log entry from the failed posting).
+					continue
+				outst_amount = item.outstanding_amount / 100 * amount_percentage
+				allocations_by_student.setdefault(item.student_id, []).append((item, outst_amount))
 
-					values.insert()
-					values.submit()
+			# Payment Entry compares its received amount against the SUM of
+			# each reference's allocated amount rounded independently to
+			# base_paid_amount's precision (2 decimals here) - not the
+			# precision allocated_amount is stored at (3). With several fee
+			# items in one receipt, rounding each item's share to 3 decimals
+			# and summing can land a fraction of a halala away from what a
+			# single 2-decimal rounding of the total gives, which is exactly
+			# what trips ERPNext's "Difference Amount must be zero" check on
+			# submit. Rounding to that same 2-decimal precision here, with
+			# the last item absorbing the remainder, guarantees the sum
+			# always matches exactly.
+			difference_precision = frappe.get_precision("Payment Entry", "base_paid_amount")
+
+			for student_id, raw_allocations in allocations_by_student.items():
+				total_allocated = round_val(sum(outst for _, outst in raw_allocations), difference_precision)
+				running_total = 0
+				allocations = []
+				for idx, (item, outst_amount) in enumerate(raw_allocations):
+					if idx == len(raw_allocations) - 1:
+						allocated = round_val(total_allocated - running_total, difference_precision)
+					else:
+						allocated = round_val(outst_amount, difference_precision)
+						running_total += allocated
+					allocations.append((item, allocated))
+
+				first_item, _ = allocations[0]
+				temp_dict = {
+					"name": student_id,
+					"amount": total_allocated,
+					"fee": first_item.fees
+				}
+				values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
+				values.reference_no = self.reference_no
+				values.reference_date = self.reference_date
+
+				values.references = []
+				for item, allocated in allocations:
+					values.append("references", {
+						"reference_doctype": "Fees",
+						"reference_name": item.fees,
+						"total_amount": item.outstanding_amount,
+						"outstanding_amount": item.outstanding_amount,
+						"allocated_amount": allocated,
+					})
+
+				values.insert()
+				values.submit()
 
 
 	def validate_amounts(self):
@@ -480,5 +581,30 @@ class FeeCollections(Document):
 			pe.set_difference_amount()
 
 		return pe
+
+
+def post_fee_collection_ledger_entries(fee_collection_name):
+	"""Background job for one Fee Collections submission.
+
+	Posts each of its pending Fees documents' own ledger entries first
+	(still one at a time, still separate GL/Payment Ledger entries per fee -
+	unchanged from the original synchronous code), and only once that's
+	done, creates the consolidated Payment Entry per student. Doing it in
+	this order avoids a window where a Payment Entry's credit-side entry
+	would exist before the matching Fees document's own debit-side entry.
+	"""
+	fee_collection = frappe.get_doc("Fee Collections", fee_collection_name)
+
+	for item in fee_collection.student_fee_details:
+		fee_doc = frappe.get_doc("Fees", item.fees)
+		if fee_doc.docstatus == 1 and fee_doc.gl_posting_status != "Posted":
+			_post_fee_ledger(fee_doc)
+
+	try:
+		fee_collection.create_payment_entries()
+	except Exception:
+		frappe.db.rollback()
+		frappe.log_error(title=f"Fee Collections {fee_collection_name}: payment entry creation failed")
+		frappe.db.commit()
 
 
