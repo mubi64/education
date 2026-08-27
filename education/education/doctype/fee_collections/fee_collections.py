@@ -268,6 +268,39 @@ class FeeCollections(Document):
 			if frappe.db.get_value("Fees", item.fees, "gl_posting_status") == "Posted"
 		}
 
+		# The receipt's own stored outstanding_amount (item.outstanding_amount,
+		# a snapshot taken when the receipt was drafted) can go stale if the
+		# fee itself changed afterwards - and ERPNext's own Payment Entry
+		# validation always force-refreshes each reference's outstanding
+		# amount from the fee's CURRENT value on submit
+		# (set_missing_ref_details(force=True) in payment_entry.py),
+		# regardless of what we set here. Allocating against the stale
+		# snapshot can then end up allocating more than the fee's current
+		# outstanding amount, failing with "Allocated Amount cannot be
+		# greater than outstanding amount". Fetch each posted fee's live
+		# amount once, up front, and allocate against that instead.
+		live_outstanding = {}
+		if posted_fees:
+			live_outstanding = {
+				f.name: f.outstanding_amount
+				for f in frappe.get_all(
+					"Fees", filters={"name": ["in", list(posted_fees)]}, fields=["name", "outstanding_amount"]
+				)
+			}
+
+		# Payment Entry compares its received amount against the SUM of
+		# each reference's allocated amount rounded independently to
+		# base_paid_amount's precision (2 decimals here) - not the
+		# precision allocated_amount is stored at (3). With several fee
+		# items in one receipt, rounding each item's share to 3 decimals
+		# and summing can land a fraction of a halala away from what a
+		# single 2-decimal rounding of the total gives, which is exactly
+		# what trips ERPNext's "Difference Amount must be zero" check on
+		# submit. Rounding to that same 2-decimal precision here, with
+		# the last item absorbing the remainder, guarantees the sum
+		# always matches exactly.
+		difference_precision = frappe.get_precision("Payment Entry", "base_paid_amount")
+
 		for row in self.fee_collection_payment:
 			amount_percentage = row.amount / self.grand_total * 100
 			self.mode_of_payment = row.mode_of_payment
@@ -284,35 +317,34 @@ class FeeCollections(Document):
 					# ledger entry to reference. Left for manual follow-up
 					# (see the Error Log entry from the failed posting).
 					continue
-				outst_amount = item.outstanding_amount / 100 * amount_percentage
-				allocations_by_student.setdefault(item.student_id, []).append((item, outst_amount))
-
-			# Payment Entry compares its received amount against the SUM of
-			# each reference's allocated amount rounded independently to
-			# base_paid_amount's precision (2 decimals here) - not the
-			# precision allocated_amount is stored at (3). With several fee
-			# items in one receipt, rounding each item's share to 3 decimals
-			# and summing can land a fraction of a halala away from what a
-			# single 2-decimal rounding of the total gives, which is exactly
-			# what trips ERPNext's "Difference Amount must be zero" check on
-			# submit. Rounding to that same 2-decimal precision here, with
-			# the last item absorbing the remainder, guarantees the sum
-			# always matches exactly.
-			difference_precision = frappe.get_precision("Payment Entry", "base_paid_amount")
+				live_amount = live_outstanding.get(item.fees, 0)
+				outst_amount = live_amount / 100 * amount_percentage
+				allocations_by_student.setdefault(item.student_id, []).append((item, outst_amount, live_amount))
 
 			for student_id, raw_allocations in allocations_by_student.items():
-				total_allocated = round_val(sum(outst for _, outst in raw_allocations), difference_precision)
+				total_allocated = round_val(sum(outst for _, outst, _ in raw_allocations), difference_precision)
 				running_total = 0
 				allocations = []
-				for idx, (item, outst_amount) in enumerate(raw_allocations):
+				for idx, (item, outst_amount, live_amount) in enumerate(raw_allocations):
 					if idx == len(raw_allocations) - 1:
 						allocated = round_val(total_allocated - running_total, difference_precision)
 					else:
 						allocated = round_val(outst_amount, difference_precision)
 						running_total += allocated
-					allocations.append((item, allocated))
+					# Never allocate more than what's genuinely still owed on
+					# this fee right now, even after remainder-absorption -
+					# guards against the same kind of staleness that caused
+					# the allocation math itself to overshoot.
+					allocated = min(allocated, live_amount)
+					allocations.append((item, allocated, live_amount))
 
-				first_item, _ = allocations[0]
+				total_allocated = round_val(sum(a for _, a, _ in allocations), difference_precision)
+				if total_allocated <= 0:
+					# Everything in this group is already fully paid - nothing
+					# left to create a Payment Entry for.
+					continue
+
+				first_item, _, _ = allocations[0]
 				temp_dict = {
 					"name": student_id,
 					"amount": total_allocated,
@@ -323,12 +355,12 @@ class FeeCollections(Document):
 				values.reference_date = self.reference_date
 
 				values.references = []
-				for item, allocated in allocations:
+				for item, allocated, live_amount in allocations:
 					values.append("references", {
 						"reference_doctype": "Fees",
 						"reference_name": item.fees,
-						"total_amount": item.outstanding_amount,
-						"outstanding_amount": item.outstanding_amount,
+						"total_amount": live_amount,
+						"outstanding_amount": live_amount,
 						"allocated_amount": allocated,
 					})
 
