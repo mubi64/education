@@ -106,6 +106,22 @@ class FeeCollections(Document):
 			self.grand_total_b_d += round_val(fee.amount_before_discount, 4)
 			self.total_d_a += round_val(fee.total_discount_amount, 4)
 
+		# Keep the payment amount in step with the total recalculated above.
+		# The client script only sets it while fee rows are edited in the
+		# browser, so when the underlying fees change afterwards (a discount
+		# gets applied, a fee is edited or partly paid) grand_total moves here
+		# while the payment row keeps its old figure - which then fails
+		# validate_amounts() on submit with no indication of why.
+		#
+		# Only done for a single payment row: a deliberate split across two
+		# modes of payment must not be overwritten. And only when there is
+		# actually something left to collect - if every fee on this receipt has
+		# since been paid through another one, grand_total is 0, and syncing
+		# would quietly turn this into a zero-value receipt that submits
+		# cleanly; leaving the amount alone keeps validate_amounts() refusing it.
+		if len(self.fee_collection_payment) == 1 and self.grand_total:
+			self.fee_collection_payment[0].amount = self.grand_total
+
 	
 	def advance_fee_discount(self):
 		advance_fee = []
@@ -375,7 +391,11 @@ class FeeCollections(Document):
 		# print(amount_in_table, amount_in_fee_table, "amount_in_table, amount_in_fee_table \n\n\n\n\n")
 		# print(round_val(amount_in_table, 4), round_val(amount_in_fee_table, 4), "round_val(amount_in_table, 4), round_val(amount_in_fee_table, 4) \n\n\n\n\n")
 		if round_val(amount_in_table, 4) != round_val(amount_in_fee_table, 4):
-			frappe.throw(_("Amount must be equal to grand total"))
+			frappe.throw(_("Amount must be equal to grand total. Payment amount is {0} but the fee items total {1} (difference {2}). Clear the Amount field and re-enter it to pick up the current total.").format(
+				round_val(amount_in_table, 4),
+				round_val(amount_in_fee_table, 4),
+				round_val(amount_in_table - amount_in_fee_table, 4),
+			))
 
 	def create_journal_entry(self, fee_doc):
 		from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_account
