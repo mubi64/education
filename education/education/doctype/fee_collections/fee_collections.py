@@ -338,28 +338,20 @@ class FeeCollections(Document):
 				allocations_by_student.setdefault(item.student_id, []).append((item, outst_amount, live_amount))
 
 			for student_id, raw_allocations in allocations_by_student.items():
-				total_allocated = round_val(sum(outst for _, outst, _ in raw_allocations), difference_precision)
-				running_total = 0
 				allocations = []
-				for idx, (item, outst_amount, live_amount) in enumerate(raw_allocations):
-					if idx == len(raw_allocations) - 1:
-						allocated = round_val(total_allocated - running_total, difference_precision)
-					else:
-						allocated = round_val(outst_amount, difference_precision)
-						running_total += allocated
-					# Never allocate more than what's genuinely still owed on
-					# this fee right now, even after remainder-absorption -
-					# guards against the same kind of staleness that caused
-					# the allocation math itself to overshoot.
-					allocated = min(allocated, live_amount)
+				for item, outst_amount, live_amount in raw_allocations:
+					# round_val can push a value like 453.3875 up past its own live
+					# outstanding amount, which ERPNext would reject - clamp each
+					# item's own share individually, no shared running total involved.
+					allocated = min(round_val(outst_amount, difference_precision), live_amount)
 					allocations.append((item, allocated, live_amount))
-
+				# Derive the payment total from these same rounded/clamped amounts
+				# instead of rounding the raw sum separately and forcing the last row
+				# to reconcile to it - that's what let the two numbers drift apart
+				# and trip "Difference Amount must be zero" on submit.
 				total_allocated = round_val(sum(a for _, a, _ in allocations), difference_precision)
 				if total_allocated <= 0:
-					# Everything in this group is already fully paid - nothing
-					# left to create a Payment Entry for.
 					continue
-
 				first_item, _, _ = allocations[0]
 				temp_dict = {
 					"name": student_id,
@@ -369,7 +361,6 @@ class FeeCollections(Document):
 				values = self.get_payment_entry("Fees", temp_dict["fee"], temp_dict, party_type="Student", payment_type="Receive")
 				values.reference_no = self.reference_no
 				values.reference_date = self.reference_date
-
 				values.references = []
 				for item, allocated, live_amount in allocations:
 					values.append("references", {
@@ -379,7 +370,6 @@ class FeeCollections(Document):
 						"outstanding_amount": live_amount,
 						"allocated_amount": allocated,
 					})
-
 				values.insert()
 				values.submit()
 
