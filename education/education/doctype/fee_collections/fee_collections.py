@@ -297,12 +297,12 @@ class FeeCollections(Document):
 		# amount once, up front, and allocate against that instead.
 		live_outstanding = {}
 		if posted_fees:
-			live_outstanding = {
-				f.name: f.outstanding_amount
-				for f in frappe.get_all(
-					"Fees", filters={"name": ["in", list(posted_fees)]}, fields=["name", "outstanding_amount"]
-				)
-			}
+			for f in frappe.get_all(
+				"Fees",
+				filters={"name": ["in", list(posted_fees)]},
+				fields=["name", "outstanding_amount", "grand_total"],
+			):
+				live_outstanding[f.name] = min(flt(f.outstanding_amount), flt(f.grand_total))
 
 		# Payment Entry compares its received amount against the SUM of
 		# each reference's allocated amount rounded independently to
