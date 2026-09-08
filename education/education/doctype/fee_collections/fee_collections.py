@@ -370,6 +370,18 @@ class FeeCollections(Document):
 						"outstanding_amount": live_amount,
 						"allocated_amount": allocated,
 					})
+				# get_payment_entry() above set paid_amount/received_amount from a
+				# single placeholder reference (the first fee only). We've since
+				# replaced references with the full multi-fee allocation set for
+				# this student, so paid/received amount are now stale relative to
+				# what's actually in the table. validate() (run by insert(), via
+				# set_amounts()) recomputes difference_amount from paid_amount vs.
+				# the sum of references, so it must be set from total_allocated -
+				# the same rounded sum the references were built from - otherwise
+				# submit's "Difference Amount must be zero" check fails against
+				# amounts that were never consistent with each other.
+				values.paid_amount = total_allocated
+				values.received_amount = total_allocated
 				values.insert()
 				values.submit()
 
