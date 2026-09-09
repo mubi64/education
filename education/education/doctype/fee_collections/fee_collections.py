@@ -295,6 +295,7 @@ class FeeCollections(Document):
 		# outstanding amount, failing with "Allocated Amount cannot be
 		# greater than outstanding amount". Fetch each posted fee's live
 		# amount once, up front, and allocate against that instead.
+		difference_precision = frappe.get_precision("Payment Entry", "base_paid_amount")
 		live_outstanding = {}
 		if posted_fees:
 			for f in frappe.get_all(
@@ -302,7 +303,7 @@ class FeeCollections(Document):
 				filters={"name": ["in", list(posted_fees)]},
 				fields=["name", "outstanding_amount", "grand_total"],
 			):
-				live_outstanding[f.name] = min(flt(f.outstanding_amount), flt(f.grand_total))
+				live_outstanding[f.name] = round_val(min(flt(f.outstanding_amount), flt(f.grand_total)), difference_precision)
 
 		# Payment Entry compares its received amount against the SUM of
 		# each reference's allocated amount rounded independently to
@@ -315,7 +316,6 @@ class FeeCollections(Document):
 		# submit. Rounding to that same 2-decimal precision here, with
 		# the last item absorbing the remainder, guarantees the sum
 		# always matches exactly.
-		difference_precision = frappe.get_precision("Payment Entry", "base_paid_amount")
 
 		for row in self.fee_collection_payment:
 			amount_percentage = row.amount / self.grand_total * 100
