@@ -193,18 +193,17 @@ class Fees(AccountsController, WebsiteGenerator):
             for i, row in enumerate(self.taxes):
                 rate_persent = row.rate / 100
                 amount = rate_persent * self.grand_total_before_tax
-				amount = flt(amount, row.precision("tax_amount"))
+                amount = flt(amount, row.precision("tax_amount"))
                 row.total = amount + self.grand_total_before_tax
                 row.tax_amount = amount
                 taxes_amount += amount
 
-
-		for row in self.taxes:
-			row.tax_amount = flt(row.tax_amount, row.precision("tax_amount"))
-			row.total = flt(row.total, row.precision("total"))
+        for row in self.taxes:
+            row.tax_amount = flt(row.tax_amount, row.precision("tax_amount"))
+            row.total = flt(row.total, row.precision("total"))
 				
-		self.total_discount_amount = flt(self.amount_before_discount) - flt(self.grand_total_before_tax)
-		taxes_amount = flt(sum(row.tax_amount for row in self.taxes), self.precision("total_taxes_and_charges"))
+        self.total_discount_amount = flt(self.amount_before_discount) - flt(self.grand_total_before_tax)
+        taxes_amount = flt(sum(row.tax_amount for row in self.taxes), self.precision("total_taxes_and_charges"))
         self.total_taxes_and_charges = taxes_amount
         self.total_taxes_and_charges_company_currency = taxes_amount
         self.grand_total += taxes_amount
