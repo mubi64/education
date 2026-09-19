@@ -53,6 +53,8 @@
   "is_return",
   "column_break_fhybu",
   "refund_against",
+  "reference_invoice_date",
+  "reason_for_credit_note",
   "amended_from"
  ],
  "fields": [
@@ -257,6 +259,23 @@
    "label": "Refund Against",
    "options": "Fee Collections",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.is_return == 1",
+   "fetch_from": "refund_against.posting_date",
+   "fieldname": "reference_invoice_date",
+   "fieldtype": "Date",
+   "label": "Reference Invoice Date",
+   "mandatory_depends_on": "eval:doc.is_return == 1",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.is_return == 1",
+   "fieldname": "reason_for_credit_note",
+   "fieldtype": "Select",
+   "label": "Reason for Credit Note / Description",
+   "mandatory_depends_on": "eval:doc.is_return == 1",
+   "options": "\nReturn of Goods\nInvoice Cancellation\nInvoice Correction\nPrice Adjustment\nDiscount Adjustment\nChange in Supply\nOther"
   },
   {
    "fieldname": "column_break_fhybu",

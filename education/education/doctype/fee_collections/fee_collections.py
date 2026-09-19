@@ -18,6 +18,29 @@ from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_ac
 from education.education.doctype.fees.fees import get_student_dicount, check_duplicate_fees_batch, _post_fee_ledger
 
 class FeeCollections(Document):
+	def before_validate(self):
+		if self.is_return and self.refund_against and not self.reference_invoice_date:
+			source_creation = frappe.db.get_value("Fee Collections", self.refund_against, "creation")
+			if source_creation:
+				self.reference_invoice_date = getdate(source_creation)
+
+	def validate(self):
+		if not self.is_return:
+			return
+
+		missing_fields = []
+		if not self.reference_invoice_date:
+			missing_fields.append(_("Reference Invoice Date"))
+		if not self.reason_for_credit_note:
+			missing_fields.append(_("Reason for Credit Note / Description"))
+
+		if missing_fields:
+			frappe.throw(
+				_("The following fields are mandatory for a return: {0}").format(
+					", ".join(missing_fields)
+				)
+			)
+
 	def before_save(self):
 		self.apply_discounts()
 
@@ -660,5 +683,4 @@ def post_fee_collection_ledger_entries(fee_collection_name):
 		frappe.db.rollback()
 		frappe.log_error(title=f"Fee Collections {fee_collection_name}: payment entry creation failed")
 		frappe.db.commit()
-
 

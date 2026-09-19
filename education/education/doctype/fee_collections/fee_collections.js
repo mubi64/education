@@ -32,6 +32,9 @@ frappe.ui.form.on("Fee Collections", {
       frm.add_custom_button(__("Make Refund"), async function () {
         const array = [];
         frm.doc.refund_against = frm.doc.name;
+        frm.doc.reference_invoice_date = frm.doc.posting_date
+          ? frm.doc.posting_date
+          : null;
 
         // Define a function to make an asynchronous call and return a Promise
         function getFeeDetails(e) {
